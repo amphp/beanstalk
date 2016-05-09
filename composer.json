@@ -1,0 +1,20 @@
+{
+    "name": "amphp/beanstalk",
+    "description": "Async beanstalk driver.",
+    "require": {
+        "amphp/amp": "^1.1",
+        "amphp/socket": "^0.9.7"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Niklas Keller",
+            "email": "me@kelunik.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Amp\\Beanstalk\\": "src"
+        }
+    }
+}
