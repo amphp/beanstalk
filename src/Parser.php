@@ -34,22 +34,22 @@ class Parser {
 
             switch ($args[0]) {
                 case self::ERROR_OUT_OF_MEMORY:
-                    $this->buffer = substr($this->buffer, strlen($line));
+                    $this->buffer = substr($this->buffer, strlen($line) + 2);
                     $callback(new OutOfMemoryException);
                     break;
 
                 case self::ERROR_INTERNAL_ERROR:
-                    $this->buffer = substr($this->buffer, strlen($line));
+                    $this->buffer = substr($this->buffer, strlen($line) + 2);
                     $callback(new InternalErrorException);
                     break;
 
                 case self::ERROR_BAD_FORMAT:
-                    $this->buffer = substr($this->buffer, strlen($line));
+                    $this->buffer = substr($this->buffer, strlen($line) + 2);
                     $callback(new BadFormatException);
                     break;
 
                 case self::ERROR_UNKNOWN_COMMAND:
-                    $this->buffer = substr($this->buffer, strlen($line));
+                    $this->buffer = substr($this->buffer, strlen($line) + 2);
                     $callback(new UnknownCommandException);
                     break;
 
@@ -81,7 +81,7 @@ class Parser {
                     break;
 
                 default:
-                    $this->buffer = substr($this->buffer, strlen($line));
+                    $this->buffer = substr($this->buffer, strlen($line) + 2);
                     $callback($args);
                     break;
             }
