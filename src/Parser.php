@@ -77,7 +77,7 @@ class Parser {
                     $data = substr($this->buffer, strlen($line) + 2, $bytes);
                     $this->buffer = substr($this->buffer, strlen($line) + $bytes + 4);
 
-                    $callback(["FOUND", (int) $args[1], $data]);
+                    $callback([$args[0], (int) $args[1], $data]);
                     break;
 
                 default:

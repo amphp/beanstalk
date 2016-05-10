@@ -133,7 +133,6 @@ class BeanstalkClient {
                 case "TIMED_OUT":
                     throw new TimedOutException;
 
-                case "FOUND":
                 case "RESERVED":
                     return [$response[1], $response[2]];
 
