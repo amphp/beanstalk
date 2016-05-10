@@ -123,7 +123,7 @@ class BeanstalkClient {
             $payload = "reserve-with-timeout $timeout\r\n";
         }
 
-        return $this->send($payload, function (array $response): int {
+        return $this->send($payload, function (array $response): array {
             list($type) = $response;
 
             switch ($type) {
