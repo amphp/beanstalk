@@ -15,5 +15,5 @@ concurrency framework.
 **Installation**
 
 ```bash
-composer require amphp/beanstalkd
+composer require amphp/beanstalk
 ```
