@@ -90,7 +90,7 @@ class BeanstalkClient {
             : $promisor->promise();
     }
 
-    public function use (string $tube) {
+    public function use(string $tube) {
         return $this->send("use " . $tube . "\r\n", function () {
             return null;
         });
