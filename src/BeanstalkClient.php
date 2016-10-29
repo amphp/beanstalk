@@ -90,6 +90,12 @@ class BeanstalkClient {
             : $promisor->promise();
     }
 
+    public function use(string $tube) {
+        return $this->send("use " . $tube . "\r\n", function () {
+            return null;
+        });
+    }
+
     public function put(string $payload, int $timeout = 60, int $delay = 0, $priority = 0): Promise {
         $payload = "put $priority $delay $timeout " . strlen($payload) . "\r\n$payload\r\n";
 
