@@ -1,10 +1,6 @@
 {
     "name": "amphp/beanstalk",
-    "description": "Async beanstalk driver.",
-    "require": {
-        "amphp/amp": "^1.1",
-        "amphp/socket": "^0.9.7"
-    },
+    "description": "Async beanstalk driver for Amp.",
     "license": "MIT",
     "authors": [
         {
@@ -16,5 +12,15 @@
         "psr-4": {
             "Amp\\Beanstalk\\": "src"
         }
+    },
+    "require": {
+        "amphp/amp": "^2",
+        "amphp/socket": "^0.10",
+        "amphp/uri": "^0.1"
+    },
+    "require-dev": {
+        "amphp/phpunit-util": "^1",
+        "phpunit/phpunit": "^6",
+        "friendsofphp/php-cs-fixer": "^2.3"
     }
 }

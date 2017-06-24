@@ -3,34 +3,35 @@
 namespace Amp\Beanstalk;
 
 use Amp\Deferred;
+use Amp\Socket\ClientConnectContext;
+use Amp\Socket\Socket;
 use Amp\Success;
-use DomainException;
-use Exception;
-use function Amp\cancel;
-use function Amp\disable;
-use function Amp\enable;
-use function Amp\onReadable;
-use function Amp\onWritable;
-use function Amp\pipe;
+use Amp\Uri\Uri;
+use function Amp\asyncCall;
+use function Amp\call;
 use function Amp\Socket\connect;
 
 class Connection {
     /** @var Deferred */
     private $connectPromisor;
+
+    /** @var Parser */
     private $parser;
-    private $uri;
-    private $timeout = 1000;
+
+    /** @var int */
+    private $timeout = 5000;
+
+    /** @var Socket */
     private $socket;
-    private $readWatcher;
-    private $writeWatcher;
-    private $outputBuffer;
-    private $outputBufferLength;
+
+    /** @var string */
+    private $uri;
+
+    /** @var array */
     private $handlers;
 
     public function __construct(string $uri) {
-        $this->parseUri($uri);
-        $this->outputBuffer = "";
-        $this->outputBufferLength = 0;
+        $this->applyUri($uri);
         $this->handlers = [
             "connect" => [],
             "response" => [],
@@ -42,39 +43,18 @@ class Connection {
             foreach ($this->handlers["response"] as $handler) {
                 $handler($response);
             }
+
+            if ($response instanceof BadFormatException) {
+                $this->onError($response);
+            }
         });
     }
 
-    private function parseUri($uri) {
-        $parts = explode("?", $uri, 2);
+    private function applyUri($uri) {
+        $uri = new Uri($uri);
 
-        if (count($parts) === 1) {
-            $this->uri = $uri;
-
-            return;
-        } else {
-            $this->uri = $parts[0];
-        }
-
-        $query = $parts[1];
-        $params = explode("&", $query);
-
-        foreach ($params as $param) {
-            $keyValue = explode("=", $param, 2);
-            $key = $keyValue[0];
-
-            if (count($keyValue) === 1) {
-                $value = true;
-            } else {
-                $value = $keyValue[1];
-            }
-
-            switch ($key) {
-                case "timeout":
-                    $this->timeout = (int) $value;
-                    break;
-            }
-        }
+        $this->timeout = (int) ($uri->getQueryParameter("timeout") ?? $this->timeout);
+        $this->uri = $uri->getScheme() . "://" . $uri->getHost() . ":" . $uri->getPort();
     }
 
     public function addEventHandler($event, callable $callback) {
@@ -82,7 +62,7 @@ class Connection {
 
         foreach ($events as $event) {
             if (!isset($this->handlers[$event])) {
-                throw new DomainException("Unknown event: " . $event);
+                throw new \Error("Unknown event: " . $event);
             }
 
             $this->handlers[$event][] = $callback;
@@ -90,13 +70,9 @@ class Connection {
     }
 
     public function send(string $payload) {
-        return pipe($this->connect(), function () use ($payload) {
-            $this->outputBuffer .= $payload;
-            $this->outputBufferLength += strlen($payload);
-
-            if ($this->writeWatcher !== null) {
-                enable($this->writeWatcher);
-            }
+        return call(function () use ($payload) {
+            yield $this->connect();
+            yield $this->socket->write($payload);
         });
     }
 
@@ -107,31 +83,14 @@ class Connection {
         }
 
         // If a read watcher exists we know we're already connected
-        if ($this->readWatcher) {
-            return new Success($this);
+        if ($this->socket) {
+            return new Success;
         }
 
         $this->connectPromisor = new Deferred;
-        $socketPromise = connect($this->uri, ["timeout" => $this->timeout]);
+        $socketPromise = connect($this->uri, (new ClientConnectContext)->withConnectTimeout($this->timeout));
 
-        $onWrite = function ($watcherId) {
-            if ($this->outputBufferLength === 0) {
-                disable($watcherId);
-
-                return;
-            }
-
-            $bytes = @fwrite($this->socket, $this->outputBuffer);
-
-            if ($bytes === 0) {
-                $this->onError(new ConnectException("Connection went away (write)", $code = 1));
-            } else {
-                $this->outputBuffer = (string) substr($this->outputBuffer, $bytes);
-                $this->outputBufferLength -= $bytes;
-            }
-        };
-
-        $socketPromise->when(function ($error, $socket) use ($onWrite) {
+        $socketPromise->onResolve(function ($error, $socket) {
             $connectPromisor = $this->connectPromisor;
             $this->connectPromisor = null;
 
@@ -149,49 +108,38 @@ class Connection {
                 $pipelinedCommand = $handler();
 
                 if (!empty($pipelinedCommand)) {
-                    $this->outputBuffer = $pipelinedCommand . $this->outputBuffer;
-                    $this->outputBufferLength += strlen($pipelinedCommand);
+                    $this->socket->write($pipelinedCommand);
                 }
             }
 
-            $this->readWatcher = onReadable($this->socket, function () {
-                $read = fread($this->socket, 8192);
-
-                if ($read != "") {
-                    $this->parser->append($read);
-                } elseif (!is_resource($this->socket) || @feof($this->socket)) {
-                    $this->onError(new ConnectException("Connection went away (read)", $code = 2));
+            asyncCall(function () {
+                while (null !== $chunk = yield $this->socket->read()) {
+                    $this->parser->send($chunk);
                 }
+
+                $this->close();
             });
 
-            $this->writeWatcher = onWritable($this->socket, $onWrite, ["enable" => !empty($this->outputBuffer)]);
-            $connectPromisor->succeed();
+            $connectPromisor->resolve();
         });
 
         return $this->connectPromisor->promise();
     }
 
-    private function onError(Exception $exception) {
+    private function onError(\Throwable $exception) {
         foreach ($this->handlers["error"] as $handler) {
             $handler($exception);
         }
 
-        $this->closeSocket();
+        $this->close();
     }
 
-    private function closeSocket() {
-        cancel($this->readWatcher);
-        cancel($this->writeWatcher);
-
-        $this->readWatcher = null;
-        $this->writeWatcher = null;
-
+    public function close() {
         $this->parser->reset();
-        $this->outputBuffer = "";
-        $this->outputBufferLength = 0;
 
-        if (is_resource($this->socket)) {
-            @fclose($this->socket);
+        if ($this->socket) {
+            $this->socket->close();
+            $this->socket = null;
         }
 
         foreach ($this->handlers["close"] as $handler) {
@@ -199,11 +147,7 @@ class Connection {
         }
     }
 
-    public function close() {
-        $this->closeSocket();
-    }
-
     public function __destruct() {
-        $this->closeSocket();
+        $this->close();
     }
 }

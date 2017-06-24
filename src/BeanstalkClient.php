@@ -4,94 +4,81 @@ namespace Amp\Beanstalk;
 
 use Amp\Deferred;
 use Amp\Promise;
-use Amp\Promisor;
+use Amp\Uri\Uri;
 use Throwable;
-use function Amp\pipe;
+use function Amp\call;
 
 class BeanstalkClient {
-    /** @var Promisor[] */
-    private $promisors;
+    /** @var Deferred[] */
+    private $deferreds;
+
     /** @var Connection */
     private $connection;
+
     /** @var string */
     private $uri;
+
     /** @var string */
     private $tube;
 
     public function __construct(string $uri) {
-        $this->parseUri($uri);
-        $this->promisors = [];
+        $this->applyUri($uri);
+
+        $this->deferreds = [];
+
         $this->connection = new Connection($uri);
         $this->connection->addEventHandler("response", function ($response) {
-            $promisor = array_shift($this->promisors);
+            /** @var Deferred $deferred */
+            $deferred = array_shift($this->deferreds);
 
             if ($response instanceof Throwable) {
-                $promisor->fail($response);
+                $deferred->fail($response);
             } else {
-                $promisor->succeed($response);
+                $deferred->resolve($response);
             }
         });
 
         $this->connection->addEventHandler(["close", "error"], function (Throwable $error = null) {
             if ($error) {
                 // Fail any outstanding promises
-                while ($this->promisors) {
-                    $promisor = array_shift($this->promisors);
-                    $promisor->fail($error);
+                while ($this->deferreds) {
+                    /** @var Deferred $deferred */
+                    $deferred = array_shift($this->deferreds);
+                    $deferred->fail($error);
                 }
             }
         });
 
         if ($this->tube) {
             $this->connection->addEventHandler("connect", function () {
-                array_unshift($this->promisors, new Deferred);
+                array_unshift($this->deferreds, new Deferred);
 
                 return "use $this->tube\r\n";
             });
         }
     }
 
-    private function parseUri($uri) {
-        $parts = explode("?", $uri, 2);
-        $this->uri = $parts[0];
+    private function applyUri(string $uri) {
+        $uri = new Uri($uri);
 
-        if (count($parts) === 1) {
-            return;
-        }
-
-        $query = $parts[1];
-        $params = explode("&", $query);
-
-        foreach ($params as $param) {
-            $keyValue = explode("=", $param, 2);
-            $key = urldecode($keyValue[0]);
-
-            if (count($keyValue) === 1) {
-                $value = true;
-            } else {
-                $value = urldecode($keyValue[1]);
-            }
-
-            switch ($key) {
-                case "tube":
-                    $this->tube = $value;
-                    break;
-            }
-        }
+        $this->tube = $uri->getQueryParameter("tube");
     }
 
-    private function send(string $message, callable $transform = null) {
-        $promisor = new Deferred;
-        $this->connection->send($message);
-        $this->promisors[] = $promisor;
+    private function send(string $message, callable $transform = null): Promise {
+        return call(function () use ($message, $transform) {
+            $this->deferreds[] = $deferred = new Deferred;
+            $promise = $deferred->promise();
 
-        return $transform
-            ? pipe($promisor->promise(), $transform)
-            : $promisor->promise();
+            yield $this->connection->send($message);
+            $response = yield $promise;
+
+            return $transform ? $transform($response) : $response;
+        });
     }
 
     public function use(string $tube) {
-        return $this->send("use " . $tube . "\r\n", function () {
+        return $this->send("use " . $tube . "\r\n", function () use ($tube) {
+            $this->tube = $tube;
             return null;
         });
     }

@@ -17,7 +17,7 @@ class Parser {
         $this->responseCallback = $responseCallback;
     }
 
-    public function append(string $bytes) {
+    public function send(string $bytes) {
         $this->buffer .= $bytes;
 
         do {
@@ -56,7 +56,7 @@ class Parser {
                 case "OK":
                     $bytes = (int) $args[1];
 
-                    if (strlen($line) + 2 + strlen($this->buffer) < $bytes + 4) {
+                    if (strlen($line) + $bytes + 4 > strlen($this->buffer)) {
                         return;
                     }
 

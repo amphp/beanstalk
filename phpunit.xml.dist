@@ -8,7 +8,7 @@
     </testsuites>
     <filter>
         <whitelist addUncoveredFilesFromWhitelist="true">
-            <directory>./lib</directory>
+            <directory>./src</directory>
         </whitelist>
     </filter>
 </phpunit>
