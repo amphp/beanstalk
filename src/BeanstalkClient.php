@@ -244,4 +244,71 @@ class BeanstalkClient {
             }
         });
     }
+
+    public function statsJob(int $id): Promise {
+        $payload = "stats-job $id\r\n";
+
+        return $this->send($payload, function (array $response) use ($id): array {
+           list($type) = $response;
+
+           switch ($type) {
+               case "OK":
+                   return $this->getStatsFromString($response[1]);
+
+               case "NOT_FOUND":
+                   throw new NotFoundException("Job with $id is not found");
+
+               default:
+                   throw new BeanstalkException("Unknown response: " . $type);
+           }
+        });
+    }
+
+    public function statsTube(string $tube): Promise {
+        $payload = "stats-tube $tube\r\n";
+
+        return $this->send($payload, function (array $response) use ($tube): array {
+            list($type) = $response;
+
+            switch ($type) {
+                case "OK":
+                    return $this->getStatsFromString($response[1]);
+
+                case "NOT_FOUND":
+                    throw new NotFoundException("Tube $tube is not found");
+
+                default:
+                    throw new BeanstalkException("Unknown response: " . $type);
+            }
+        });
+    }
+
+    public function stats(): Promise {
+        $payload = "stats\r\n";
+
+        return $this->send($payload, function (array $response): array {
+            list($type) = $response;
+
+            switch ($type) {
+                case "OK":
+                    return $this->getStatsFromString($response[1]);
+
+                default:
+                    throw new BeanstalkException("Unknown response: " . $type);
+            }
+        });
+    }
+
+    private function getStatsFromString(string $stats): array {
+        $result = [];
+        $source = explode("\n", $stats);
+        foreach ($source as $stat) {
+            if ($stat == '---' || empty($stat)) {
+                continue;
+            }
+            list($key, $value) = explode(':', $stat);
+            $result[$key] = $value;
+        }
+        return $result;
+    }
 }
