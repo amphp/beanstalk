@@ -96,7 +96,9 @@ class Connection {
 
             if ($error) {
                 $connectPromisor->fail(new ConnectException(
-                    "Connection attempt failed", $code = 0, $error
+                    "Connection attempt failed",
+                    $code = 0,
+                    $error
                 ));
 
                 return;

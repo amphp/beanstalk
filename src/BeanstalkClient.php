@@ -2,6 +2,9 @@
 
 namespace Amp\Beanstalk;
 
+use Amp\Beanstalk\Stats\Job;
+use Amp\Beanstalk\Stats\System;
+use Amp\Beanstalk\Stats\Tube;
 use Amp\Deferred;
 use Amp\Promise;
 use Amp\Uri\Uri;
@@ -243,5 +246,72 @@ class BeanstalkClient {
                     throw new BeanstalkException("Unknown response: " . $type);
             }
         });
+    }
+
+    public function getJobStats(int $id): Promise {
+        $payload = "stats-job $id\r\n";
+
+        return $this->send($payload, function (array $response) use ($id): Job {
+            list($type) = $response;
+
+            switch ($type) {
+                case "OK":
+                    return new Job($this->getStatsFromString($response[1]));
+
+                case "NOT_FOUND":
+                    throw new NotFoundException("Job with $id is not found");
+
+                default:
+                    throw new BeanstalkException("Unknown response: " . $type);
+            }
+        });
+    }
+
+    public function getTubeStats(string $tube): Promise {
+        $payload = "stats-tube $tube\r\n";
+
+        return $this->send($payload, function (array $response) use ($tube): Tube {
+            list($type) = $response;
+
+            switch ($type) {
+                case "OK":
+                    return new Tube($this->getStatsFromString($response[1]));
+
+                case "NOT_FOUND":
+                    throw new NotFoundException("Tube $tube is not found");
+
+                default:
+                    throw new BeanstalkException("Unknown response: " . $type);
+            }
+        });
+    }
+
+    public function getSystemStats(): Promise {
+        $payload = "stats\r\n";
+
+        return $this->send($payload, function (array $response): System {
+            list($type) = $response;
+
+            switch ($type) {
+                case "OK":
+                    return new System($this->getStatsFromString($response[1]));
+
+                default:
+                    throw new BeanstalkException("Unknown response: " . $type);
+            }
+        });
+    }
+
+    private function getStatsFromString(string $stats): array {
+        $result = [];
+        $source = explode("\n", $stats);
+        foreach ($source as $stat) {
+            if ($stat == '---' || empty($stat)) {
+                continue;
+            }
+            list($key, $value) = explode(':', $stat);
+            $result[$key] = trim($value);
+        }
+        return $result;
     }
 }
