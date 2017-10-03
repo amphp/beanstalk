@@ -249,18 +249,18 @@ class BeanstalkClient {
         $payload = "stats-job $id\r\n";
 
         return $this->send($payload, function (array $response) use ($id): array {
-           list($type) = $response;
+            list($type) = $response;
 
-           switch ($type) {
-               case "OK":
-                   return $this->getStatsFromString($response[1]);
+            switch ($type) {
+                case "OK":
+                    return $this->getStatsFromString($response[1]);
 
-               case "NOT_FOUND":
-                   throw new NotFoundException("Job with $id is not found");
+                case "NOT_FOUND":
+                    throw new NotFoundException("Job with $id is not found");
 
-               default:
-                   throw new BeanstalkException("Unknown response: " . $type);
-           }
+                default:
+                    throw new BeanstalkException("Unknown response: " . $type);
+            }
         });
     }
 
