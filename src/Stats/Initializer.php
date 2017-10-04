@@ -5,11 +5,15 @@ namespace Amp\Beanstalk\Stats;
 trait Initializer {
     public function __construct(array $properties) {
         foreach ($properties as $key => $value) {
-            $key = str_replace('-', '_', $key);
-            if (!property_exists($this, $key)) {
+            $formattedKey = $this->getPropertyInCamelCase($key);
+            if (!property_exists($this, $formattedKey)) {
                 continue;
             }
-            $this->{$key} = $value;
+            $this->{$formattedKey} = $value;
         }
+    }
+
+    private function getPropertyInCamelCase(string $key): string {
+        return lcfirst(str_replace(' ', '', ucwords(str_replace('-', ' ', $key))));
     }
 }
