@@ -248,7 +248,7 @@ class BeanstalkClient {
         });
     }
 
-    public function statsJob(int $id): Promise {
+    public function getJobStats(int $id): Promise {
         $payload = "stats-job $id\r\n";
 
         return $this->send($payload, function (array $response) use ($id): Job {
@@ -267,7 +267,7 @@ class BeanstalkClient {
         });
     }
 
-    public function statsTube(string $tube): Promise {
+    public function getTubeStats(string $tube): Promise {
         $payload = "stats-tube $tube\r\n";
 
         return $this->send($payload, function (array $response) use ($tube): Tube {
@@ -286,7 +286,7 @@ class BeanstalkClient {
         });
     }
 
-    public function stats(): Promise {
+    public function getSystemStats(): Promise {
         $payload = "stats\r\n";
 
         return $this->send($payload, function (array $response): System {
