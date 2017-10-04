@@ -2,8 +2,10 @@
 
 namespace Amp\Beanstalk\Stats;
 
+use Amp\Struct;
+
 class Tube {
-    use Initializer;
+    use Initializer, Struct;
 
     public $name;
 

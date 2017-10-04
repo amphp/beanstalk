@@ -2,8 +2,10 @@
 
 namespace Amp\Beanstalk\Stats;
 
+use Amp\Struct;
+
 class Job {
-    use Initializer;
+    use Initializer, Struct;
 
     public $id;
 

@@ -2,8 +2,10 @@
 
 namespace Amp\Beanstalk\Stats;
 
+use Amp\Struct;
+
 class System {
-    use Initializer;
+    use Initializer, Struct;
 
     public $current_jobs_urgent;
 
