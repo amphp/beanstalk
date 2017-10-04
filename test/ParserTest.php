@@ -1,5 +1,7 @@
 <?php
 
+namespace Amp\Beanstalk\Test;
+
 use Amp\Beanstalk\Parser;
 use PHPUnit\Framework\TestCase;
 
