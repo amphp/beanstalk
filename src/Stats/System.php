@@ -2,7 +2,7 @@
 
 namespace Amp\Beanstalk\Stats;
 
-class Stats {
+class System {
     use Initializer;
 
     public $current_jobs_urgent;

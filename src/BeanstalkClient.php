@@ -3,7 +3,7 @@
 namespace Amp\Beanstalk;
 
 use Amp\Beanstalk\Stats\Job;
-use Amp\Beanstalk\Stats\Stats;
+use Amp\Beanstalk\Stats\System;
 use Amp\Beanstalk\Stats\Tube;
 use Amp\Deferred;
 use Amp\Promise;
@@ -289,12 +289,12 @@ class BeanstalkClient {
     public function stats(): Promise {
         $payload = "stats\r\n";
 
-        return $this->send($payload, function (array $response): Stats {
+        return $this->send($payload, function (array $response): System {
             list($type) = $response;
 
             switch ($type) {
                 case "OK":
-                    return new Stats($this->getStatsFromString($response[1]));
+                    return new System($this->getStatsFromString($response[1]));
 
                 default:
                     throw new BeanstalkException("Unknown response: " . $type);
