@@ -21,7 +21,7 @@ class Job {
 
     public $ttr;
 
-    public $time_left;
+    public $timeLeft;
 
     public $file;
 

@@ -7,93 +7,93 @@ use Amp\Struct;
 class System {
     use Initializer, Struct;
 
-    public $current_jobs_urgent;
+    public $currentJobsUrgent;
 
-    public $current_jobs_ready;
+    public $currentJobsReady;
 
-    public $current_jobs_reserved;
+    public $currentJobsReserved;
 
-    public $current_jobs_delayed;
+    public $currentJobsDelayed;
 
-    public $current_jobs_buried;
+    public $currentJobsBuried;
 
-    public $cmd_put;
+    public $cmdPut;
 
-    public $cmd_peek;
+    public $cmdPeek;
 
-    public $cmd_peek_ready;
+    public $cmdPeekReady;
 
-    public $cmd_peek_delayed;
+    public $cmdPeekDelayed;
 
-    public $cmd_peek_buried;
+    public $cmdPeekBuried;
 
-    public $cmd_reserve;
+    public $cmdReserve;
 
-    public $cmd_use;
+    public $cmdUse;
 
-    public $cmd_watch;
+    public $cmdWatch;
 
-    public $cmd_ignore;
+    public $cmdIgnore;
 
-    public $cmd_delete;
+    public $cmdDelete;
 
-    public $cmd_release;
+    public $cmdRelease;
 
-    public $cmd_bury;
+    public $cmdBury;
 
-    public $cmd_kick;
+    public $cmdKick;
 
-    public $cmd_stats;
+    public $cmdStats;
 
-    public $cmd_stats_job;
+    public $cmdStatsJob;
 
-    public $cmd_stats_tube;
+    public $cmdStatsTube;
 
-    public $cmd_list_tubes;
+    public $cmdListTubes;
 
-    public $cmd_list_tube_used;
+    public $cmdListTubeUsed;
 
-    public $cmd_list_tubes_watched;
+    public $cmdListTubesWatched;
 
-    public $cmd_pause_tube;
+    public $cmdPauseTube;
 
-    public $job_timeouts;
+    public $jobTimeouts;
 
-    public $total_jobs;
+    public $totalJobs;
 
-    public $max_job_size;
+    public $maxJobSize;
 
-    public $current_tubes;
+    public $currentTubes;
 
-    public $current_connections;
+    public $currentConnections;
 
-    public $current_producers;
+    public $currentProducers;
 
-    public $current_workers;
+    public $currentWorkers;
 
-    public $current_waiting;
+    public $currentWaiting;
 
-    public $total_connections;
+    public $totalConnections;
 
     public $pid;
 
     public $version;
 
-    public $rusage_utime;
+    public $rusageUtime;
 
-    public $rusage_stime;
+    public $rusageStime;
 
     public $uptime;
 
-    public $binlog_oldest_index;
+    public $binlogOldestIndex;
 
-    public $binlog_current_index;
+    public $binlogCurrentIndex;
 
-    public $binlog_max_size;
+    public $binlogMaxSize;
 
-    public $binlog_records_written;
+    public $binlogRecordsWritten;
 
-    public $binlog_records_migrated;
+    public $binlogRecordsMigrated;
 
     public $id;
 

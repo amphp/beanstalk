@@ -9,27 +9,27 @@ class Tube {
 
     public $name;
 
-    public $current_jobs_urgent;
+    public $currentJobsUrgent;
 
-    public $current_jobs_reserved;
+    public $currentJobsReserved;
 
-    public $current_jobs_delayed;
+    public $currentJobsDelayed;
 
-    public $current_jobs_buried;
+    public $currentJobsBuried;
 
-    public $total_jobs;
+    public $totalJobs;
 
-    public $current_using;
+    public $currentUsing;
 
-    public $current_waiting;
+    public $currentWaiting;
 
-    public $current_watching;
+    public $currentWatching;
 
     public $pause;
 
-    public $cmd_delete;
+    public $cmdDelete;
 
-    public $cmd_pause_tube;
+    public $cmdPauseTube;
 
-    public $pause_time_left;
+    public $pauseTimeLeft;
 }
