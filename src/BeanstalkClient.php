@@ -2,6 +2,9 @@
 
 namespace Amp\Beanstalk;
 
+use Amp\Beanstalk\Stats\Job;
+use Amp\Beanstalk\Stats\Stats;
+use Amp\Beanstalk\Stats\Tube;
 use Amp\Deferred;
 use Amp\Promise;
 use Amp\Uri\Uri;
@@ -248,12 +251,12 @@ class BeanstalkClient {
     public function statsJob(int $id): Promise {
         $payload = "stats-job $id\r\n";
 
-        return $this->send($payload, function (array $response) use ($id): array {
+        return $this->send($payload, function (array $response) use ($id): Job {
             list($type) = $response;
 
             switch ($type) {
                 case "OK":
-                    return $this->getStatsFromString($response[1]);
+                    return new Job($this->getStatsFromString($response[1]));
 
                 case "NOT_FOUND":
                     throw new NotFoundException("Job with $id is not found");
@@ -267,12 +270,12 @@ class BeanstalkClient {
     public function statsTube(string $tube): Promise {
         $payload = "stats-tube $tube\r\n";
 
-        return $this->send($payload, function (array $response) use ($tube): array {
+        return $this->send($payload, function (array $response) use ($tube): Tube {
             list($type) = $response;
 
             switch ($type) {
                 case "OK":
-                    return $this->getStatsFromString($response[1]);
+                    return new Tube($this->getStatsFromString($response[1]));
 
                 case "NOT_FOUND":
                     throw new NotFoundException("Tube $tube is not found");
@@ -286,12 +289,12 @@ class BeanstalkClient {
     public function stats(): Promise {
         $payload = "stats\r\n";
 
-        return $this->send($payload, function (array $response): array {
+        return $this->send($payload, function (array $response): Stats {
             list($type) = $response;
 
             switch ($type) {
                 case "OK":
-                    return $this->getStatsFromString($response[1]);
+                    return new Stats($this->getStatsFromString($response[1]));
 
                 default:
                     throw new BeanstalkException("Unknown response: " . $type);
@@ -307,7 +310,7 @@ class BeanstalkClient {
                 continue;
             }
             list($key, $value) = explode(':', $stat);
-            $result[$key] = $value;
+            $result[$key] = trim($value);
         }
         return $result;
     }
