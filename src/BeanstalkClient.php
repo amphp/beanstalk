@@ -8,6 +8,7 @@ use Amp\Beanstalk\Stats\Tube;
 use Amp\Deferred;
 use Amp\Promise;
 use Amp\Uri\Uri;
+use Symfony\Component\Yaml\Yaml;
 use Throwable;
 use function Amp\call;
 
@@ -83,6 +84,25 @@ class BeanstalkClient {
         return $this->send("use " . $tube . "\r\n", function () use ($tube) {
             $this->tube = $tube;
             return null;
+        });
+    }
+
+    public function pause(string $tube, int $delay): Promise {
+        $payload = "pause-tube $tube $delay\r\n";
+
+        return $this->send($payload, function (array $response) use ($tube): bool {
+            list($type) = $response;
+
+            switch ($type) {
+                case "PAUSED":
+                    return true;
+
+                case "NOT_FOUND":
+                    throw new NotFoundException("Tube with name $tube is not found");
+
+                default:
+                    throw new BeanstalkException("Unknown response: " . $type);
+            }
         });
     }
 
@@ -248,6 +268,10 @@ class BeanstalkClient {
         });
     }
 
+    public function quit() {
+        $this->send("quit\r\n");
+    }
+
     public function getJobStats(int $id): Promise {
         $payload = "stats-job $id\r\n";
 
@@ -256,7 +280,7 @@ class BeanstalkClient {
 
             switch ($type) {
                 case "OK":
-                    return new Job($this->getStatsFromString($response[1]));
+                    return new Job(Yaml::parse($response[1]));
 
                 case "NOT_FOUND":
                     throw new NotFoundException("Job with $id is not found");
@@ -275,7 +299,7 @@ class BeanstalkClient {
 
             switch ($type) {
                 case "OK":
-                    return new Tube($this->getStatsFromString($response[1]));
+                    return new Tube(Yaml::parse($response[1]));
 
                 case "NOT_FOUND":
                     throw new NotFoundException("Tube $tube is not found");
@@ -294,7 +318,7 @@ class BeanstalkClient {
 
             switch ($type) {
                 case "OK":
-                    return new System($this->getStatsFromString($response[1]));
+                    return new System(Yaml::parse($response[1]));
 
                 default:
                     throw new BeanstalkException("Unknown response: " . $type);
@@ -302,16 +326,51 @@ class BeanstalkClient {
         });
     }
 
-    private function getStatsFromString(string $stats): array {
-        $result = [];
-        $source = explode("\n", $stats);
-        foreach ($source as $stat) {
-            if ($stat == '---' || empty($stat)) {
-                continue;
+    public function getTubesList(): Promise {
+        $payload = "list-tubes\r\n";
+
+        return $this->send($payload, function (array $response): array {
+            list($type) = $response;
+
+            switch ($type) {
+                case "OK":
+                    return Yaml::parse($response[1]);
+
+                default:
+                    throw new BeanstalkException("Unknown response: " . $type);
             }
-            list($key, $value) = explode(':', $stat);
-            $result[$key] = trim($value);
-        }
-        return $result;
+        });
+    }
+
+    public function getWatchedTubesList(): Promise {
+        $payload = "list-tubes-watched\r\n";
+
+        return $this->send($payload, function (array $response): array {
+            list($type) = $response;
+
+            switch ($type) {
+                case "OK":
+                    return Yaml::parse($response[1]);
+
+                default:
+                    throw new BeanstalkException("Unknown response: " . $type);
+            }
+        });
+    }
+
+    public function getUsingTube(): Promise {
+        $payload = "list-tube-used\r\n";
+
+        return $this->send($payload, function (array $response): string {
+            list($type) = $response;
+
+            switch ($type) {
+                case "USING":
+                    return $response[1];
+
+                default:
+                    throw new BeanstalkException("Unknown response: " . $type);
+            }
+        });
     }
 }
