@@ -90,12 +90,12 @@ class BeanstalkClient {
     public function pause(string $tube, int $delay): Promise {
         $payload = "pause-tube $tube $delay\r\n";
 
-        return $this->send($payload, function (array $response) use ($tube): bool {
+        return $this->send($payload, function (array $response) use ($tube): null {
             list($type) = $response;
 
             switch ($type) {
                 case "PAUSED":
-                    return true;
+                    return null;
 
                 case "NOT_FOUND":
                     throw new NotFoundException("Tube with name $tube is not found");
@@ -326,7 +326,7 @@ class BeanstalkClient {
         });
     }
 
-    public function getTubesList(): Promise {
+    public function listTubes(): Promise {
         $payload = "list-tubes\r\n";
 
         return $this->send($payload, function (array $response): array {
@@ -342,7 +342,7 @@ class BeanstalkClient {
         });
     }
 
-    public function getWatchedTubesList(): Promise {
+    public function listWatchedTubes(): Promise {
         $payload = "list-tubes-watched\r\n";
 
         return $this->send($payload, function (array $response): array {
