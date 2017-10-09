@@ -90,7 +90,7 @@ class BeanstalkClient {
     public function pause(string $tube, int $delay): Promise {
         $payload = "pause-tube $tube $delay\r\n";
 
-        return $this->send($payload, function (array $response) use ($tube): null {
+        return $this->send($payload, function (array $response) use ($tube) {
             list($type) = $response;
 
             switch ($type) {
