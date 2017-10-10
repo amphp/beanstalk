@@ -16,7 +16,8 @@
     "require": {
         "amphp/amp": "^2",
         "amphp/socket": "^0.10",
-        "amphp/uri": "^0.1"
+        "amphp/uri": "^0.1",
+        "symfony/yaml": "^3.3"
     },
     "require-dev": {
         "amphp/phpunit-util": "^1",
