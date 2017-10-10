@@ -358,7 +358,7 @@ class BeanstalkClient {
         });
     }
 
-    public function getUsingTube(): Promise {
+    public function getUsedTube(): Promise {
         $payload = "list-tube-used\r\n";
 
         return $this->send($payload, function (array $response): string {
