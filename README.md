@@ -8,16 +8,7 @@
 
 ## Installation
 
-Add amphp/beanstalk to your composer.json file or you can require amphp/beanstalk with composer. If you are not using Composer, you should be. It's an excellent way to manage dependencies in your PHP application.
 
-```bash
-composer require amphp/beanstalk
-```
-
-Then from the command line:
-```bash
-composer install
-```
 
 
 
