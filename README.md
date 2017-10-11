@@ -4,7 +4,7 @@
 [![CoverageStatus](https://img.shields.io/coveralls/amphp/beanstalk/master.svg?style=flat-square)](https://coveralls.io/github/amphp/beanstalkd?branch=master)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)
 
-`amphp/beanstalk` is an asynchronous client for [Beanstalk](http://kr.github.io/beanstalkd/).
+`amphp/beanstalk` is an asynchronous client for [Beanstalk](http://kr.github.io/beanstalkd/) based on Amp for PHP.
 
 ## Installation
 
@@ -27,4 +27,4 @@ $jobId = yield $beanstalk->put($payload);
 ```
 
 ## More documentation
-More documentation can be found in the [docs folder](docs/)
+More documentation can be found on [https://amphp.org/beanstalk/](https://amphp.org/beanstalk/)
