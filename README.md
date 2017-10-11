@@ -8,7 +8,7 @@
 
 ## Installation
 
-
+Please refer to https://github.com/amphp/amp#installation
 
 
 
