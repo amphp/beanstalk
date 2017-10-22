@@ -2,9 +2,13 @@
 
 namespace Amp\Beanstalk;
 
+use Amp\Beanstalk\Stats\Job;
+use Amp\Beanstalk\Stats\System;
+use Amp\Beanstalk\Stats\Tube;
 use Amp\Deferred;
 use Amp\Promise;
 use Amp\Uri\Uri;
+use Symfony\Component\Yaml\Yaml;
 use Throwable;
 use function Amp\call;
 
@@ -80,6 +84,25 @@ class BeanstalkClient {
         return $this->send("use " . $tube . "\r\n", function () use ($tube) {
             $this->tube = $tube;
             return null;
+        });
+    }
+
+    public function pause(string $tube, int $delay): Promise {
+        $payload = "pause-tube $tube $delay\r\n";
+
+        return $this->send($payload, function (array $response) use ($tube) {
+            list($type) = $response;
+
+            switch ($type) {
+                case "PAUSED":
+                    return null;
+
+                case "NOT_FOUND":
+                    throw new NotFoundException("Tube with name $tube is not found");
+
+                default:
+                    throw new BeanstalkException("Unknown response: " . $type);
+            }
         });
     }
 
@@ -238,6 +261,112 @@ class BeanstalkClient {
 
                 case "NOT_IGNORED":
                     throw new NotIgnoredException;
+
+                default:
+                    throw new BeanstalkException("Unknown response: " . $type);
+            }
+        });
+    }
+
+    public function quit() {
+        $this->send("quit\r\n");
+    }
+
+    public function getJobStats(int $id): Promise {
+        $payload = "stats-job $id\r\n";
+
+        return $this->send($payload, function (array $response) use ($id): Job {
+            list($type) = $response;
+
+            switch ($type) {
+                case "OK":
+                    return new Job(Yaml::parse($response[1]));
+
+                case "NOT_FOUND":
+                    throw new NotFoundException("Job with $id is not found");
+
+                default:
+                    throw new BeanstalkException("Unknown response: " . $type);
+            }
+        });
+    }
+
+    public function getTubeStats(string $tube): Promise {
+        $payload = "stats-tube $tube\r\n";
+
+        return $this->send($payload, function (array $response) use ($tube): Tube {
+            list($type) = $response;
+
+            switch ($type) {
+                case "OK":
+                    return new Tube(Yaml::parse($response[1]));
+
+                case "NOT_FOUND":
+                    throw new NotFoundException("Tube $tube is not found");
+
+                default:
+                    throw new BeanstalkException("Unknown response: " . $type);
+            }
+        });
+    }
+
+    public function getSystemStats(): Promise {
+        $payload = "stats\r\n";
+
+        return $this->send($payload, function (array $response): System {
+            list($type) = $response;
+
+            switch ($type) {
+                case "OK":
+                    return new System(Yaml::parse($response[1]));
+
+                default:
+                    throw new BeanstalkException("Unknown response: " . $type);
+            }
+        });
+    }
+
+    public function listTubes(): Promise {
+        $payload = "list-tubes\r\n";
+
+        return $this->send($payload, function (array $response): array {
+            list($type) = $response;
+
+            switch ($type) {
+                case "OK":
+                    return Yaml::parse($response[1]);
+
+                default:
+                    throw new BeanstalkException("Unknown response: " . $type);
+            }
+        });
+    }
+
+    public function listWatchedTubes(): Promise {
+        $payload = "list-tubes-watched\r\n";
+
+        return $this->send($payload, function (array $response): array {
+            list($type) = $response;
+
+            switch ($type) {
+                case "OK":
+                    return Yaml::parse($response[1]);
+
+                default:
+                    throw new BeanstalkException("Unknown response: " . $type);
+            }
+        });
+    }
+
+    public function getUsedTube(): Promise {
+        $payload = "list-tube-used\r\n";
+
+        return $this->send($payload, function (array $response): string {
+            list($type) = $response;
+
+            switch ($type) {
+                case "USING":
+                    return $response[1];
 
                 default:
                     throw new BeanstalkException("Unknown response: " . $type);
