@@ -8,6 +8,7 @@
 
 ## Installation
 
-```bash
-composer require amphp/beanstalk
-```
+Please refer to https://github.com/amphp/amp#installation
+
+
+
