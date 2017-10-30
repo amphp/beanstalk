@@ -4,10 +4,27 @@
 [![CoverageStatus](https://img.shields.io/coveralls/amphp/beanstalk/master.svg?style=flat-square)](https://coveralls.io/github/amphp/beanstalkd?branch=master)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)
 
-`amphp/beanstalk` is a non-blocking BeanstalkD client for [Amp](https://github.com/amphp/amp).
+`amphp/beanstalk` is an asynchronous client for [Beanstalk](http://kr.github.io/beanstalkd/) based on Amp for PHP.
 
 ## Installation
 
-```bash
+```
 composer require amphp/beanstalk
 ```
+
+## Usage
+
+```php
+$beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300?tube=foobar");
+
+$payload = json_encode([
+    "job" => bin2hex(random_bytes(16)),
+    "type" => "compress-image"
+    "path" => "/path/to/image.png"
+]);
+
+$jobId = yield $beanstalk->put($payload);
+```
+
+## More documentation
+More documentation can be found on [https://amphp.org/beanstalk/](https://amphp.org/beanstalk/)
