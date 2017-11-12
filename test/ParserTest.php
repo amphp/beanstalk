@@ -6,7 +6,6 @@ use Amp\Beanstalk\Parser;
 use PHPUnit\Framework\TestCase;
 
 class ParserTest extends TestCase {
-
     protected $parserToTest;
 
     protected $parsedElements;
