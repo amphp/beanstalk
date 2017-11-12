@@ -15,7 +15,7 @@ class IntegrationTest extends TestCase {
 
     public function setUp() {
         if (!\getenv("AMP_TEST_BEANSTALK_INTEGRATION") && !\getenv("TRAVIS")) {
-            $this->markTestSkipped("You need to uset AMP_TEST_BEANSTALK_INTEGRATION=1 in order to run the integration tests.");
+            $this->markTestSkipped("You need to set AMP_TEST_BEANSTALK_INTEGRATION=1 in order to run the integration tests.");
         }
 
         $this->beanstalk = new BeanstalkClient("tcp://127.0.0.1:11300");
