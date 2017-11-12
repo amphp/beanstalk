@@ -5,75 +5,60 @@ namespace Amp\Beanstalk\Test;
 use Amp\Beanstalk\Parser;
 use PHPUnit\Framework\TestCase;
 
-class ParserTest extends TestCase
-{
-    /**
-     * @param mixed &$parsed_elements
-     * @return Parser
-     */
-    protected function getParserToTest(&$parsed_elements)
-    {
-        return new Parser(function ($result) use (&$parsed_elements) {
-            $parsed_elements = $result;
+class ParserTest extends TestCase {
+
+    protected $parserToTest;
+
+    protected $parsedElements;
+
+    public function setUp() {
+        $this->parserToTest = new Parser(function ($result) {
+            $this->parsedElements = $result;
         });
     }
 
-    public function testParsesPartialResponseCorrectly()
-    {
-        $parser = $this->getParserToTest($parsed);
-
-        $parser->send("OK 5\r\nhello\r");
-        $this->assertNull($parsed);
-        $parser->send("\n");
-        $this->assertSame(["OK", "hello"], $parsed);
+    public function testParsesPartialResponseCorrectly() {
+        $this->parserToTest->send("OK 5\r\nhello\r");
+        $this->assertNull($this->parsedElements);
+        $this->parserToTest->send("\n");
+        $this->assertSame(["OK", "hello"], $this->parsedElements);
     }
 
-    public function testParsesFound()
-    {
-        $parser = $this->getParserToTest($parsed);
-        $parser->send("FOUND 5 5\r\nhello\r");
-        $this->assertSame(["FOUND", 5, 'hello'], $parsed);
+    public function testParsesFound() {
+        $this->parserToTest->send("FOUND 5 5\r\nhello\r");
+        $this->assertSame(["FOUND", 5, 'hello'], $this->parsedElements);
     }
 
-    public function testParsesReserved()
-    {
-        $parser = $this->getParserToTest($parsed);
-
-        $parser->send("RESERVED 2 30\r\n");
-        $this->assertNull($parsed);
-        $parser->reset();
-        $parser->send("RESERVED 5 5\r\nhello\r");
-        $this->assertSame(["RESERVED", 5, 'hello'], $parsed);
+    public function testParsesReserved() {
+        $this->parserToTest->send("RESERVED 2 30\r\n");
+        $this->assertNull($this->parsedElements);
+        $this->parserToTest->reset();
+        $this->parserToTest->send("RESERVED 5 5\r\nhello\r");
+        $this->assertSame(["RESERVED", 5, 'hello'], $this->parsedElements);
     }
 
-    public function testResetBuffer()
-    {
-        $parser = $this->getParserToTest($parsed);
+    public function testResetBuffer() {
+        $this->parserToTest->send("OK 5\r\nmorning\r");
+        $this->assertSame(["OK", "morni"], $this->parsedElements);
+        $this->parserToTest->send("fddfd\r\nbyebye\r");
+        $this->assertSame(["\rfddfd"], $this->parsedElements);
 
-        $parser->send("OK 5\r\nmorning\r");
-        $this->assertSame(["OK", "morni"], $parsed);
-        $parser->send("fddfd\r\nbyebye\r");
-        $this->assertSame(["\rfddfd"], $parsed);
+        $this->parserToTest->reset();
 
-        $parser->reset();
-
-        $parser->send("OK 5\r\nbyebye\r");
-        $this->assertSame(["OK", "byeby"], $parsed);
+        $this->parserToTest->send("OK 5\r\nbyebye\r");
+        $this->assertSame(["OK", "byeby"], $this->parsedElements);
     }
 
 
     /**
      * @dataProvider dataProviderTestExceptions
      */
-    public function testParserExceptions($buffer, $exceptionExpected)
-    {
-        $parser = $this->getParserToTest($parsed);
-        $parser->send($buffer);
-        $this->assertInstanceOf($exceptionExpected, $parsed);
+    public function testParserExceptions($buffer, $exceptionExpected) {
+        $this->parserToTest->send($buffer);
+        $this->assertInstanceOf($exceptionExpected, $this->parsedElements);
     }
 
-    public function dataProviderTestExceptions()
-    {
+    public function dataProviderTestExceptions() {
         return [
             [
                 "OUT_OF_MEMORY\r\nhello\r",
