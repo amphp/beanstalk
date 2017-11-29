@@ -187,7 +187,7 @@ class BeanstalkClient {
     }
 
     public function bury(int $id, int $priority = 0): Promise {
-        $payload = "release $id $priority\r\n";
+        $payload = "bury $id $priority\r\n";
 
         return $this->send($payload, function (array $response): int {
             list($type) = $response;
