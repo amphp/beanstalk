@@ -20,9 +20,6 @@ class BeanstalkClient {
     private $connection;
 
     /** @var string */
-    private $uri;
-
-    /** @var string */
     private $tube;
 
     public function __construct(string $uri) {
@@ -63,9 +60,7 @@ class BeanstalkClient {
     }
 
     private function applyUri(string $uri) {
-        $uri = new Uri($uri);
-
-        $this->tube = $uri->getQueryParameter("tube");
+        $this->tube = (new Uri($uri))->getQueryParameter("tube");
     }
 
     private function send(string $message, callable $transform = null): Promise {
@@ -133,11 +128,7 @@ class BeanstalkClient {
     }
 
     public function reserve(int $timeout = null): Promise {
-        if ($timeout === null) {
-            $payload = "reserve\r\n";
-        } else {
-            $payload = "reserve-with-timeout $timeout\r\n";
-        }
+        $payload = $timeout === null ? "reserve\r\n" : "reserve-with-timeout $timeout\r\n";
 
         return $this->send($payload, function (array $response): array {
             list($type) = $response;
@@ -237,15 +228,11 @@ class BeanstalkClient {
         $payload = "watch $tube\r\n";
 
         return $this->send($payload, function (array $response): int {
-            list($type) = $response;
-
-            switch ($type) {
-                case "WATCHING":
-                    return (int) $response[1];
-
-                default:
-                    throw new BeanstalkException("Unknown response: " . $type);
+            if ($response[0] !== "WATCHING") {
+                throw new BeanstalkException("Unknown response: " . $response[0]);
             }
+
+            return (int) $response[1];
         });
     }
 
@@ -314,15 +301,11 @@ class BeanstalkClient {
         $payload = "stats\r\n";
 
         return $this->send($payload, function (array $response): System {
-            list($type) = $response;
-
-            switch ($type) {
-                case "OK":
-                    return new System(Yaml::parse($response[1]));
-
-                default:
-                    throw new BeanstalkException("Unknown response: " . $type);
+            if ($response[0] !== "OK") {
+                throw new BeanstalkException("Unknown response: " . $response[0]);
             }
+
+            return new System(Yaml::parse($response[1]));
         });
     }
 

@@ -27,7 +27,7 @@ class Connection {
     /** @var string */
     private $uri;
 
-    /** @var array */
+    /** @var callable[][] */
     private $handlers;
 
     public function __construct(string $uri) {
@@ -57,8 +57,8 @@ class Connection {
         $this->uri = $uri->getScheme() . "://" . $uri->getHost() . ":" . $uri->getPort();
     }
 
-    public function addEventHandler($event, callable $callback) {
-        $events = (array) $event;
+    public function addEventHandler($events, callable $callback) {
+        $events = (array) $events;
 
         foreach ($events as $event) {
             if (!isset($this->handlers[$event])) {

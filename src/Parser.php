@@ -54,28 +54,28 @@ class Parser {
                     break;
 
                 case "OK":
-                    $bytes = (int) $args[1];
+                    $size = (int) $args[1];
 
-                    if (strlen($line) + $bytes + 4 > strlen($this->buffer)) {
+                    if (strlen($line) + $size + 4 > strlen($this->buffer)) {
                         return;
                     }
 
-                    $data = substr($this->buffer, strlen($line) + 2, $bytes);
-                    $this->buffer = substr($this->buffer, strlen($line) + $bytes + 4);
+                    $data = substr($this->buffer, strlen($line) + 2, $size);
+                    $this->buffer = substr($this->buffer, strlen($line) + $size + 4);
 
                     $callback(["OK", $data]);
                     break;
 
                 case "FOUND":
                 case "RESERVED":
-                    $bytes = (int) $args[2];
+                    $size = (int) $args[2];
 
-                    if (strlen($line) + 2 + strlen($this->buffer) < $bytes + 4) {
+                    if (strlen($line) + 2 + strlen($this->buffer) < $size + 4) {
                         return;
                     }
 
-                    $data = substr($this->buffer, strlen($line) + 2, $bytes);
-                    $this->buffer = substr($this->buffer, strlen($line) + $bytes + 4);
+                    $data = substr($this->buffer, strlen($line) + 2, $size);
+                    $this->buffer = substr($this->buffer, strlen($line) + $size + 4);
 
                     $callback([$args[0], (int) $args[1], $data]);
                     break;
