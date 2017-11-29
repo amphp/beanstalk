@@ -171,7 +171,7 @@ class BeanstalkClient {
     public function release(int $id, int $delay = 0, int $priority = 0): Promise {
         $payload = "release $id $priority $delay\r\n";
 
-        return $this->send($payload, function (array $response): int {
+        return $this->send($payload, function (array $response): string {
             list($type) = $response;
 
             switch ($type) {
