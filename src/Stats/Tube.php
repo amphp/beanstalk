@@ -10,6 +10,7 @@ class Tube {
     public function __construct(array $struct) {
         $this->name = $struct["name"];
         $this->currentJobsUrgent = (int) $struct["current-jobs-urgent"];
+        $this->currentJobsReady = (int) $struct["current-jobs-ready"];
         $this->currentJobsReserved = (int) $struct["current-jobs-reserved"];
         $this->currentJobsDelayed = (int) $struct["current-jobs-delayed"];
         $this->currentJobsBuried = (int) $struct["current-jobs-buried"];
@@ -25,6 +26,7 @@ class Tube {
 
     public $name;
     public $currentJobsUrgent;
+    public $currentJobsReady;
     public $currentJobsReserved;
     public $currentJobsDelayed;
     public $currentJobsBuried;
