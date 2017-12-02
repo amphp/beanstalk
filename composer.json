@@ -23,5 +23,10 @@
         "amphp/phpunit-util": "^1",
         "phpunit/phpunit": "^6",
         "friendsofphp/php-cs-fixer": "^2.3"
+    },
+    "config": {
+        "platform": {
+            "php": "7.0.0"
+        }
     }
 }
