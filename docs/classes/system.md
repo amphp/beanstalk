@@ -12,41 +12,41 @@ The `System` class exposes no methods, just properties. These properties represe
 
 | Property | Type | Description |
 | -------- | ---- | ----------- |
-| `$currentJobsUrgent` | integer | The number of ready jobs with priority < 1024 |
-| `$currentJobsReady` | integer | The number of jobs in the ready queue |
-| `$currentJobsReserved` | integer | The number of jobs reserved by all clients |
-| `$currentJobsDelayed` | integer | The number of delayed jobs |
-| `$currentJobsBuried` | integer | The number of buried jobs |
-| `$cmdPut` | integer | The cumulative number of put commands |
-| `$cmdPeek` | integer | The cumulative number of peek commands |
-| `$cmdPeekReady` | integer | The cumulative number of peek-ready commands |
-| `$cmdPeekDelayed` | integer | The cumulative number of peek-delayed commands |
-| `$cmdPeekBuried` | integer | The cumulative number of peek-buried commands |
-| `$cmdReserve` | integer | The cumulative number of reserve commands |
-| `$cmdUse` | integer | The cumulative number of use commands |
-| `$cmdWatch` | integer | The cumulative number of watch commands |
-| `$cmdIgnore` | integer | The cumulative number of ignore commands |
-| `$cmdDelete` | integer | The cumulative number of delete commands |
-| `$cmdRelease` | integer | The cumulative number of release commands |
-| `$cmdBury` | integer | The cumulative number of bury commands |
-| `$cmdKick` | integer | The cumulative number of kick commands |
-| `$cmdStats` | integer | The cumulative number of stats commands |
-| `$cmdStatsJob` | integer | The cumulative number of stats-job commands |
-| `$cmdStatsTube` | integer | The cumulative number of stats-tube commands |
-| `$cmdListTubes` | integer | The cumulative number of list-tubes commands |
-| `$cmdListTubeUsed` | integer | The cumulative number of list-tubes-used commands |
-| `$cmdListTubesWatched` | integer | The cumulative number of list-tubes-watched commands |
-| `$cmdPauseTube` | integer | The cumulative number of pause-tube commands |
-| `jobTimeouts` | integer | The cumulative count of jobs that timed out |
-| `$totalJobs` | integer | The cumulative count of jobs created |
-| `$maxJobSize` | integer | The maximum number of bytes in a job |
-| `$currentTubes` | integer | The number of currently existing tubes |
-| `$currentConnections` | integer | The number of currently open connections |
-| `$currentProducers` | integer | The number of currently open connections that have issued at least one put command |
-| `$currentWorkers` | integer | The number of currently open connections that have issued at least one reserve command |
-| `$currentWaiting` | integer | The number of currently open connections that have issued a reserve command but haven't received a response yet |
-| `$totalConnections` | integer | The cumulative number of connections |
-| `$pid` | integer | The process id of the server |
+| `$currentJobsUrgent` | int | The number of ready jobs with priority < 1024 |
+| `$currentJobsReady` | int | The number of jobs in the ready queue |
+| `$currentJobsReserved` | int | The number of jobs reserved by all clients |
+| `$currentJobsDelayed` | int | The number of delayed jobs |
+| `$currentJobsBuried` | int | The number of buried jobs |
+| `$cmdPut` | int | The cumulative number of put commands |
+| `$cmdPeek` | int | The cumulative number of peek commands |
+| `$cmdPeekReady` | int | The cumulative number of peek-ready commands |
+| `$cmdPeekDelayed` | int | The cumulative number of peek-delayed commands |
+| `$cmdPeekBuried` | int | The cumulative number of peek-buried commands |
+| `$cmdReserve` | int | The cumulative number of reserve commands |
+| `$cmdUse` | int | The cumulative number of use commands |
+| `$cmdWatch` | int | The cumulative number of watch commands |
+| `$cmdIgnore` | int | The cumulative number of ignore commands |
+| `$cmdDelete` | int | The cumulative number of delete commands |
+| `$cmdRelease` | int | The cumulative number of release commands |
+| `$cmdBury` | int | The cumulative number of bury commands |
+| `$cmdKick` | int | The cumulative number of kick commands |
+| `$cmdStats` | int | The cumulative number of stats commands |
+| `$cmdStatsJob` | int | The cumulative number of stats-job commands |
+| `$cmdStatsTube` | int | The cumulative number of stats-tube commands |
+| `$cmdListTubes` | int | The cumulative number of list-tubes commands |
+| `$cmdListTubeUsed` | int | The cumulative number of list-tubes-used commands |
+| `$cmdListTubesWatched` | int | The cumulative number of list-tubes-watched commands |
+| `$cmdPauseTube` | int | The cumulative number of pause-tube commands |
+| `jobTimeouts` | int | The cumulative count of jobs that timed out |
+| `$totalJobs` | int | The cumulative count of jobs created |
+| `$maxJobSize` | int | The maximum number of bytes in a job |
+| `$currentTubes` | int | The number of currently existing tubes |
+| `$currentConnections` | int | The number of currently open connections |
+| `$currentProducers` | int | The number of currently open connections that have issued at least one put command |
+| `$currentWorkers` | int | The number of currently open connections that have issued at least one reserve command |
+| `$currentWaiting` | int | The number of currently open connections that have issued a reserve command but haven't received a response yet |
+| `$totalConnections` | int | The cumulative number of connections |
+| `$pid` | int | The process id of the server |
 | `$version` | string | The version of the server |
 | `$rusageUtime` | float | The cumulative user CPU time of this process in seconds and microseconds |
 | `$rusageStime` | float | The cumulative system CPU time of this process in seconds and microseconds |
