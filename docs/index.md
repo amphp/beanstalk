@@ -2,7 +2,7 @@
 title: Introduction
 permalink: /
 ---
-`amphp/beanstalk` is an asynchronous client for [Beanstalk](http://kr.github.io/beanstalkd/).
+`amphp/beanstalk` is an asynchronous client for [Beanstalk][beanstalk].
 
 ## Installation
 
@@ -12,14 +12,17 @@ composer require amphp/beanstalk
 
 ## Usage
 
+Connecting to a [Beanstalk][beanstalk] server
+
 ```php
-$beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300?tube=foobar");
+$beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
+// If you already know the tube you need to connect to, or have a single tube, you
+// can connect to the server with an additional tube query parameter.
+// $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300?tube=foobar");
 
-$payload = json_encode([
-    "job" => bin2hex(random_bytes(16)),
-    "type" => "compress-image"
-    "path" => "/path/to/image.png"
-]);
+$systemStats = $beanstalk->getSystemStats();
 
-$jobId = yield $beanstalk->put($payload);
+$readyJobs = $systemStats->currentJobsReady;
 ```
+
+[beanstalk]: http://kr.github.io/beanstalkd/
