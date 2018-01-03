@@ -3,6 +3,9 @@ title: Working with Tubes
 permalink: /tubes
 ---
 
+* Table of Contents
+{:toc}
+
 ## Using a different tube
 
 By default Beanstalk will use the default tube for reserving and storing new jobs. To work with a different tube, you need can use `use`:
@@ -64,7 +67,7 @@ $beanstalk->ignore($tube = 'default');
 $watchlist = $beanstalk->listWatchedTubes();
 ```
 
-### Get a list of all existing tubes
+## Get a list of all existing tubes
 
 If you need to see a list of all the tubes that exist on the server.
 
@@ -74,7 +77,17 @@ $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
 $tubes = $beanstalk->listTubes();
 ```
 
-### Get tube stats
+## Get the tube being used
+
+To determine which tube your client is currently using.
+
+```php
+$beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
+
+$tube = $beanstalk->getUsedTube();
+```
+
+## Get tube stats
 
 To see what stats are available for a tube, checkout the [Tube](classes/tube) class page.
 

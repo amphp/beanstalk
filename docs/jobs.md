@@ -3,6 +3,9 @@ title: Working with Jobs
 permalink: /jobs
 ---
 
+* Table of Contents
+{:toc}
+
 ## Pushing jobs onto a queue
 
 ```php
