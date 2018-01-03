@@ -27,3 +27,5 @@ shared_asset_path: "/beanstalk/asset"
 
 navigation:
  - classes
+ - jobs
+ - tubes
