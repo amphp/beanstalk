@@ -8,7 +8,7 @@ permalink: /tubes
 
 ## Using a different tube
 
-By default Beanstalk will use the default tube for reserving and storing new jobs. To work with a different tube, you need can use `use`:
+By default Beanstalk will use the default tube for reserving and storing new jobs. To work with a different tube, you can use `use`:
 
 ```php
 $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
@@ -37,7 +37,7 @@ If you need to pause a tube, preventing any new jobs from being reserved, you ca
 ```php
 $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
 
-$beanstalk->pause($tube = 'foobar');
+yield $beanstalk->pause($tube = 'foobar');
 ```
 
 ## Watching and ignoring tubes
@@ -47,9 +47,9 @@ By default when you reserve a job you'll either pull from the `default` tube, or
 ```php
 $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
 
-$beanstalk->watch($tube = 'foobar');
-$beanstalk->watch($tube = 'barbaz');
-$beanstalk->ignore($tube = 'default');
+yield $beanstalk->watch($tube = 'foobar');
+yield $beanstalk->watch($tube = 'barbaz');
+yield $beanstalk->ignore($tube = 'default');
 // Watchlist will contain "foobar" and "barbaz"
 ```
 
@@ -60,9 +60,9 @@ To find out which tubes your connection is currently watching.
 ```php
 $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
 
-$beanstalk->watch($tube = 'foobar');
-$beanstalk->watch($tube = 'barbaz');
-$beanstalk->ignore($tube = 'default');
+yield $beanstalk->watch($tube = 'foobar');
+yield $beanstalk->watch($tube = 'barbaz');
+yield $beanstalk->ignore($tube = 'default');
 
 $watchlist = $beanstalk->listWatchedTubes();
 ```
@@ -74,7 +74,7 @@ If you need to see a list of all the tubes that exist on the server.
 ```php
 $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
 
-$tubes = $beanstalk->listTubes();
+$tubes = yield $beanstalk->listTubes();
 ```
 
 ## Get the tube being used
@@ -84,7 +84,7 @@ To determine which tube your client is currently using.
 ```php
 $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
 
-$tube = $beanstalk->getUsedTube();
+$tube = yield $beanstalk->getUsedTube();
 ```
 
 ## Get tube stats
@@ -94,5 +94,5 @@ To see what stats are available for a tube, checkout the [Tube](classes/tube) cl
 ```php
 $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
 
-$stats = $beanstalk->getTubeStats($tube = 'default');
+$stats = yield $beanstalk->getTubeStats($tube = 'default');
 ```

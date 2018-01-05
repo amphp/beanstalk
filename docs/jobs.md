@@ -34,13 +34,13 @@ $beanstalk->use('foobar');
 while([$jobId, $jobData] = yield $beanstalk->reserve()) {
   // Work the job using $jobData
   // Once you're finished, delete the job
-  $beanstalk->delete($jobId);
+  yield $beanstalk->delete($jobId);
 
   // If there was an error, you can bury the job for inspection later
-  $beanstalk->bury($jobId);
+  yield $beanstalk->bury($jobId);
 
   // Of you can release the job, to be picked up by a new worker
-  $beanstalk->release($jobId);
+  yield $beanstalk->release($jobId);
 }
 ```
 
@@ -55,7 +55,7 @@ $beanstalk->use('foobar');
 while([$jobId, $jobData] = yield $beanstalk->reserve()) {
   // Work the job
   // If you still need time to work the job, you can utilize the touch command
-  $beantstalk->touch($jobId);
+  yield $beantstalk->touch($jobId);
 }
 ```
 
@@ -67,6 +67,6 @@ $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
 // This step not required if you included a tube query parameter when creating the client
 $beanstalk->use('foobar');
 
-$jobStats = $beanstalk->getJobStats($jobId = 42);
+$jobStats = yield $beanstalk->getJobStats($jobId = 42);
 $jobStats->state; // ready
 ```
