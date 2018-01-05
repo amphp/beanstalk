@@ -32,15 +32,15 @@ $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
 $beanstalk->use('foobar');
 
 while([$jobId, $jobData] = yield $beanstalk->reserve()) {
-  // Work the job using $jobData
-  // Once you're finished, delete the job
-  yield $beanstalk->delete($jobId);
-
-  // If there was an error, you can bury the job for inspection later
-  yield $beanstalk->bury($jobId);
-
-  // Of you can release the job, to be picked up by a new worker
-  yield $beanstalk->release($jobId);
+    // Work the job using $jobData
+    // Once you're finished, delete the job
+    yield $beanstalk->delete($jobId);
+    
+    // If there was an error, you can bury the job for inspection later
+    yield $beanstalk->bury($jobId);
+    
+    // Of you can release the job, to be picked up by a new worker
+    yield $beanstalk->release($jobId);
 }
 ```
 
@@ -53,9 +53,9 @@ $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
 $beanstalk->use('foobar');
 
 while([$jobId, $jobData] = yield $beanstalk->reserve()) {
-  // Work the job
-  // If you still need time to work the job, you can utilize the touch command
-  yield $beantstalk->touch($jobId);
+    // Work the job
+    // If you still need time to work the job, you can utilize the touch command
+    yield $beantstalk->touch($jobId);
 }
 ```
 
