@@ -13,7 +13,7 @@ To see what stats are available for the system, checkout the [System](classes/sy
 ```php
 $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
 
-$stats = $beanstalk->getSystemStats();
+$stats = yield $beanstalk->getSystemStats();
 ```
 
 ## Close the connection
