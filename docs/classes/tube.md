@@ -3,9 +3,6 @@ title: Tube
 permalink: /classes/tube
 ---
 
-* Table of Contents
-{:toc}
-
 The `Tube` class exposes no methods, just properties. These properties represent various details about a tube within [Beanstalk](http://kr.github.io/beanstalkd/)
 
 ## Properties

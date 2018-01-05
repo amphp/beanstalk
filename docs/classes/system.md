@@ -3,9 +3,6 @@ title: System
 permalink: /classes/system
 ---
 
-* Table of Contents
-{:toc}
-
 The `System` class exposes no methods, just properties. These properties represent various details about a [Beanstalk](http://kr.github.io/beanstalkd/) server
 
 ## Properties

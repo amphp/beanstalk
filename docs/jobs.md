@@ -6,7 +6,7 @@ permalink: /jobs
 * Table of Contents
 {:toc}
 
-## Pushing jobs onto a queue
+## Pushing Jobs onto a Queue
 
 ```php
 $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
@@ -23,7 +23,7 @@ $payload = json_encode([
 $jobId = yield $beanstalk->put($payload);
 ```
 
-## Pulling jobs off a queue
+## Pulling Jobs off a Queue
 
 ```php
 $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
@@ -44,7 +44,7 @@ while([$jobId, $jobData] = yield $beanstalk->reserve()) {
 }
 ```
 
-## Working a long running job
+## Working a Long Running Job
 
 ```php
 $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
@@ -59,7 +59,7 @@ while([$jobId, $jobData] = yield $beanstalk->reserve()) {
 }
 ```
 
-## Getting a jobs stats
+## Getting a Jobs Stats
 
 ```php
 $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");

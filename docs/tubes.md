@@ -6,7 +6,7 @@ permalink: /tubes
 * Table of Contents
 {:toc}
 
-## Using a different tube
+## Using a Different Tube
 
 By default Beanstalk will use the default tube for reserving and storing new jobs. To work with a different tube, you can use `use`:
 
@@ -30,7 +30,7 @@ $jobId = yield $beanstalk->put($payload = json_encode([
 ]));
 ```
 
-## Pausing a tube
+## Pausing a Tube
 
 If you need to pause a tube, preventing any new jobs from being reserved, you can do the following:
 
@@ -40,7 +40,7 @@ $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
 yield $beanstalk->pause($tube = 'foobar');
 ```
 
-## Watching and ignoring tubes
+## Watching and Ignoring Tubes
 
 By default when you reserve a job you'll either pull from the `default` tube, or the tube you `use`ed. If you'd like to reserve jobs from other tubes, you can use `watch` to pull from multiple tubes. If you need to remove a job from the watch list, you can use `ignore`.
 
@@ -53,7 +53,7 @@ yield $beanstalk->ignore($tube = 'default');
 // Watchlist will contain "foobar" and "barbaz"
 ```
 
-### Getting the connections Watchlist
+### Getting the Watched Tubes
 
 To find out which tubes your connection is currently watching.
 
@@ -67,7 +67,7 @@ yield $beanstalk->ignore($tube = 'default');
 $watchlist = $beanstalk->listWatchedTubes();
 ```
 
-## Get a list of all existing tubes
+## Get a List of All Existing Tubes
 
 If you need to see a list of all the tubes that exist on the server.
 
@@ -77,7 +77,7 @@ $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
 $tubes = yield $beanstalk->listTubes();
 ```
 
-## Get the tube being used
+## Get the Tube Being Used
 
 To determine which tube your client is currently using.
 
@@ -87,7 +87,7 @@ $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
 $tube = yield $beanstalk->getUsedTube();
 ```
 
-## Get tube stats
+## Get Tube Stats
 
 To see what stats are available for a tube, checkout the [Tube](classes/tube) class page.
 

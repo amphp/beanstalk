@@ -3,9 +3,6 @@ title: Job
 permalink: /classes/job
 ---
 
-* Table of Contents
-{:toc}
-
 The `Job` class exposes no methods, just properties. These properties represent various details about a job within [Beanstalk](http://kr.github.io/beanstalkd/)
 
 ## Properties

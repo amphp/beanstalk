@@ -12,7 +12,7 @@ composer require amphp/beanstalk
 
 ## Usage
 
-Connecting to a [Beanstalk][beanstalk] server
+Connecting to a [Beanstalk][beanstalk] server.
 
 ```php
 $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
@@ -20,7 +20,7 @@ $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
 // can connect to the server with an additional tube query parameter.
 // $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300?tube=foobar");
 
-$systemStats = $beanstalk->getSystemStats();
+$systemStats = yield $beanstalk->getSystemStats();
 
 $readyJobs = $systemStats->currentJobsReady;
 ```
