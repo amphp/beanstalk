@@ -28,8 +28,7 @@ $jobId = yield $beanstalk->put($payload);
 ```php
 $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
 
-// This step not required if you included a tube query parameter when creating the client
-$beanstalk->use('foobar');
+$beanstalk->watch('foobar');
 
 while([$jobId, $jobData] = yield $beanstalk->reserve()) {
     // Work the job using $jobData
@@ -49,8 +48,7 @@ while([$jobId, $jobData] = yield $beanstalk->reserve()) {
 ```php
 $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
 
-// This step not required if you included a tube query parameter when creating the client
-$beanstalk->use('foobar');
+$beanstalk->watch('foobar');
 
 while([$jobId, $jobData] = yield $beanstalk->reserve()) {
     // Work the job
@@ -63,9 +61,6 @@ while([$jobId, $jobData] = yield $beanstalk->reserve()) {
 
 ```php
 $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
-
-// This step not required if you included a tube query parameter when creating the client
-$beanstalk->use('foobar');
 
 $jobStats = yield $beanstalk->getJobStats($jobId = 42);
 $jobStats->state; // ready
