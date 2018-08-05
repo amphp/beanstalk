@@ -356,4 +356,57 @@ class BeanstalkClient {
             }
         });
     }
+
+    public function peek(int $id): Promise {
+        $payload = "peek $id\r\n";
+
+        return $this->send($payload, function (array $response) use ($id): string {
+            list($type) = $response;
+
+            switch ($type) {
+                case "FOUND":
+                    return $response[2];
+
+                case "NOT_FOUND":
+                    throw new NotFoundException("Job with $id is not found");
+
+                default:
+                    throw new BeanstalkException("Unknown response: " . $type);
+            }
+        });
+    }
+
+    public function peekReady(): Promise {
+        return $this->peekInState('ready');
+    }
+
+    public function peekDelayed(): Promise {
+        return $this->peekInState('delayed');
+    }
+
+    public function peekBuried(): Promise {
+        return $this->peekInState('buried');
+    }
+
+    private function peekInState(string $state): Promise {
+        $payload = "peek-$state\r\n";
+
+        return $this->send(
+            $payload,
+            function (array $response) use ($state): string {
+                list($type) = $response;
+
+                switch ($type) {
+                    case "FOUND":
+                        return $response[2];
+
+                    case "NOT_FOUND":
+                        throw new NotFoundException("No Job in $state state");
+
+                    default:
+                        throw new BeanstalkException("Unknown response: " . $type);
+                }
+            }
+        );
+    }
 }
