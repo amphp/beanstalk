@@ -49,6 +49,37 @@ class IntegrationTest extends TestCase {
             $statsAfter = yield $this->beanstalk->getSystemStats();
 
             $this->assertSame($statsBefore->cmdPut + 1, $statsAfter->cmdPut);
+
+            // cleanup
+            yield $this->beanstalk->delete($jobId);
+        }));
+    }
+
+    public function testPeek() {
+        wait(call(function () {
+            $jobId = yield $this->beanstalk->put('I am ready');
+            $this->assertInternalType("int", $jobId);
+
+            $peekedJob = yield $this->beanstalk->peek($jobId);
+            $this->assertEquals('I am ready', $peekedJob);
+
+            $peekedJob = yield $this->beanstalk->peekReady();
+            $this->assertEquals('I am ready', $peekedJob);
+
+            list($jobId) = yield $this->beanstalk->reserve();
+            yield $this->beanstalk->bury($jobId);
+            $peekedJob = yield $this->beanstalk->peekBuried();
+            $this->assertEquals('I am ready', $peekedJob);
+
+            //cleanup
+            yield $this->beanstalk->delete($jobId);
+
+            yield $this->beanstalk->put('I am delayed', 60, 60);
+            $peekedJob = yield $this->beanstalk->peekDelayed();
+            $this->assertEquals('I am delayed', $peekedJob);
+
+            //cleanup
+            yield $this->beanstalk->delete($jobId);
         }));
     }
 
