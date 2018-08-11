@@ -23,8 +23,7 @@ class IntegrationTest extends TestCase {
         $this->beanstalk = new BeanstalkClient("tcp://127.0.0.1:11300");
     }
 
-    protected function tearDown()
-    {
+    protected function tearDown() {
         foreach ($this->jobsToDelete as $jobId) {
             yield $this->beanstalk->delete($jobId);
         }
@@ -53,8 +52,7 @@ class IntegrationTest extends TestCase {
         }));
     }
 
-    public function testKickJob()
-    {
+    public function testKickJob() {
         wait(call(function () {
             $jobId = yield $this->beanstalk->put("hi");
             $this->jobsToDelete[] = $jobId;
@@ -75,8 +73,7 @@ class IntegrationTest extends TestCase {
         }));
     }
 
-    public function testKick()
-    {
+    public function testKick() {
         wait(call(function () {
             for ($i = 0; $i < 10; $i++) {
                 $this->jobsToDelete[] = yield $this->beanstalk->put("Job $i");
