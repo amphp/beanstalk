@@ -12,8 +12,6 @@ use function Amp\Promise\wait;
 class IntegrationTest extends TestCase {
     /** @var BeanstalkClient */
     private $beanstalk;
-    /**  @var array */
-    private $jobsToDelete = [];
 
     public function setUp() {
         if (!\getenv("AMP_TEST_BEANSTALK_INTEGRATION") && !\getenv("TRAVIS")) {
@@ -21,12 +19,14 @@ class IntegrationTest extends TestCase {
         }
 
         $this->beanstalk = new BeanstalkClient("tcp://127.0.0.1:11300");
-    }
 
-    protected function tearDown() {
-        foreach ($this->jobsToDelete as $jobId) {
-            yield $this->beanstalk->delete($jobId);
-        }
+        wait(call(function () {
+            /** @var System $stats */
+            $stats = yield $this->beanstalk->getSystemStats();
+            for ($jobId = 1; $jobId <= $stats->totalJobs; $jobId++) {
+                yield $this->beanstalk->delete($jobId);
+            }
+        }));
     }
 
     public function testPut() {
@@ -35,7 +35,6 @@ class IntegrationTest extends TestCase {
             $statsBefore = yield $this->beanstalk->getSystemStats();
 
             $jobId = yield $this->beanstalk->put("hi");
-            $this->jobsToDelete[] = $jobId;
             $this->assertInternalType("int", $jobId);
 
             /** @var Job $jobStats */
@@ -49,9 +48,6 @@ class IntegrationTest extends TestCase {
             $statsAfter = yield $this->beanstalk->getSystemStats();
 
             $this->assertSame($statsBefore->cmdPut + 1, $statsAfter->cmdPut);
-
-            // cleanup
-            yield $this->beanstalk->delete($jobId);
         }));
     }
 
@@ -67,26 +63,20 @@ class IntegrationTest extends TestCase {
             $this->assertEquals('I am ready', $peekedJob);
 
             list($jobId) = yield $this->beanstalk->reserve();
-            yield $this->beanstalk->bury($jobId);
+            $buried = yield $this->beanstalk->bury($jobId);
+            $this->assertEquals(1, $buried);
             $peekedJob = yield $this->beanstalk->peekBuried();
             $this->assertEquals('I am ready', $peekedJob);
 
-            //cleanup
-            yield $this->beanstalk->delete($jobId);
-
-            yield $this->beanstalk->put('I am delayed', 60, 60);
+            $jobId = yield $this->beanstalk->put('I am delayed', 60, 60);
             $peekedJob = yield $this->beanstalk->peekDelayed();
             $this->assertEquals('I am delayed', $peekedJob);
-
-            //cleanup
-            yield $this->beanstalk->delete($jobId);
         }));
     }
 
     public function testKickJob() {
         wait(call(function () {
             $jobId = yield $this->beanstalk->put("hi");
-            $this->jobsToDelete[] = $jobId;
             $this->assertInternalType("int", $jobId);
 
             $kicked = yield $this->beanstalk->kickJob($jobId);
@@ -107,7 +97,7 @@ class IntegrationTest extends TestCase {
     public function testKick() {
         wait(call(function () {
             for ($i = 0; $i < 10; $i++) {
-                $this->jobsToDelete[] = yield $this->beanstalk->put("Job $i");
+                yield $this->beanstalk->put("Job $i");
             }
             for ($i = 0; $i < 8; $i++) {
                 list($jobId, ) = yield $this->beanstalk->reserve();
