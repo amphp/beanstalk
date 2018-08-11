@@ -227,12 +227,12 @@ class BeanstalkClient {
     public function kick(int $count): Promise {
         $payload = "kick $count\r\n";
 
-        return $this->send($payload, function (array $response): bool {
+        return $this->send($payload, function (array $response): int {
             list($type) = $response;
 
             switch ($type) {
                 case "KICKED":
-                    return $response[1];
+                    return (int) $response[1];
 
                 default:
                     throw new BeanstalkException("Unknown response: $type");
