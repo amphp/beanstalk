@@ -12,6 +12,8 @@ use function Amp\Promise\wait;
 class IntegrationTest extends TestCase {
     /** @var BeanstalkClient */
     private $beanstalk;
+    /**  @var array */
+    private $jobsToDelete = [];
 
     public function setUp() {
         if (!\getenv("AMP_TEST_BEANSTALK_INTEGRATION") && !\getenv("TRAVIS")) {
@@ -21,12 +23,20 @@ class IntegrationTest extends TestCase {
         $this->beanstalk = new BeanstalkClient("tcp://127.0.0.1:11300");
     }
 
+    protected function tearDown()
+    {
+        foreach ($this->jobsToDelete as $jobId) {
+            yield $this->beanstalk->delete($jobId);
+        }
+    }
+
     public function testPut() {
         wait(call(function () {
             /** @var System $statsBefore */
             $statsBefore = yield $this->beanstalk->getSystemStats();
 
             $jobId = yield $this->beanstalk->put("hi");
+            $this->jobsToDelete[] = $jobId;
             $this->assertInternalType("int", $jobId);
 
             /** @var Job $jobStats */
@@ -40,9 +50,6 @@ class IntegrationTest extends TestCase {
             $statsAfter = yield $this->beanstalk->getSystemStats();
 
             $this->assertSame($statsBefore->cmdPut + 1, $statsAfter->cmdPut);
-
-            // cleanup
-            yield $this->beanstalk->delete($jobId);
         }));
     }
 
@@ -50,6 +57,7 @@ class IntegrationTest extends TestCase {
     {
         wait(call(function () {
             $jobId = yield $this->beanstalk->put("hi");
+            $this->jobsToDelete[] = $jobId;
             $this->assertInternalType("int", $jobId);
 
             $kicked = yield $this->beanstalk->kickJob($jobId);
@@ -64,9 +72,29 @@ class IntegrationTest extends TestCase {
 
             $kicked = yield $this->beanstalk->kickJob($jobId);
             $this->assertTrue($kicked);
+        }));
+    }
 
-            // cleanup
-            yield $this->beanstalk->delete($jobId);
+    public function testKick()
+    {
+        wait(call(function () {
+            for ($i = 0; $i < 10; $i++) {
+                $this->jobsToDelete[] = yield $this->beanstalk->put("Job $i");
+            }
+            for ($i = 0; $i < 8; $i++) {
+                list($jobId, ) = yield $this->beanstalk->reserve();
+                $buried = yield $this->beanstalk->bury($jobId);
+                $this->assertEquals(1, $buried);
+            }
+
+            $kicked = yield $this->beanstalk->kick(4);
+            $this->assertEquals(4, $kicked);
+
+            $kicked = yield $this->beanstalk->kick(10);
+            $this->assertEquals(4, $kicked);
+
+            $kicked = yield $this->beanstalk->kick(1);
+            $this->assertEquals(0, $kicked);
         }));
     }
 }
