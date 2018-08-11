@@ -40,6 +40,33 @@ class IntegrationTest extends TestCase {
             $statsAfter = yield $this->beanstalk->getSystemStats();
 
             $this->assertSame($statsBefore->cmdPut + 1, $statsAfter->cmdPut);
+
+            // cleanup
+            yield $this->beanstalk->delete($jobId);
+        }));
+    }
+
+    public function testKickJob()
+    {
+        wait(call(function () {
+            $jobId = yield $this->beanstalk->put("hi");
+            $this->assertInternalType("int", $jobId);
+
+            $kicked = yield $this->beanstalk->kickJob($jobId);
+            $this->assertFalse($kicked);
+
+            list($jobId, ) = yield $this->beanstalk->reserve();
+            $buried = yield $this->beanstalk->bury($jobId);
+            $this->assertEquals(1, $buried);
+            /** @var Job $jobStats */
+            $jobStats = yield $this->beanstalk->getJobStats($jobId);
+            $this->assertEquals('buried', $jobStats->state);
+
+            $kicked = yield $this->beanstalk->kickJob($jobId);
+            $this->assertTrue($kicked);
+
+            // cleanup
+            yield $this->beanstalk->delete($jobId);
         }));
     }
 }

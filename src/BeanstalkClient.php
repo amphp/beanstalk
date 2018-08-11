@@ -205,6 +205,25 @@ class BeanstalkClient {
         });
     }
 
+    public function kickJob(int $id): Promise {
+        $payload = "kick-job $id\r\n";
+
+        return $this->send($payload, function (array $response): bool {
+            list($type) = $response;
+
+            switch ($type) {
+                case "KICKED":
+                    return true;
+
+                case "NOT_FOUND":
+                    return false;
+
+                default:
+                    throw new BeanstalkException("Unknown response: $type");
+            }
+        });
+    }
+
     public function touch(int $id): Promise {
         $payload = "touch $id\r\n";
 
