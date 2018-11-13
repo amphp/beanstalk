@@ -1,11 +1,11 @@
 {
-    "name": "amphp/beanstalk",
-    "description": "Async beanstalk driver for Amp.",
+    "name": "x100up/beanstalk",
+    "description": "Async beanstalk driver for Amp. Fork amphp/beanstalk!",
     "license": "MIT",
     "authors": [
         {
-            "name": "Niklas Keller",
-            "email": "me@kelunik.com"
+            "name": "Roman",
+            "email": "x100up@ya.ru"
         }
     ],
     "autoload": {
