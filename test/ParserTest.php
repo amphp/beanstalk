@@ -38,7 +38,7 @@ class ParserTest extends TestCase {
 
     public function testResetBuffer() {
         $this->parserToTest->send("OK 7\r\nmorn");
-        $this->assertSame(null, $this->parsedElements);
+        $this->assertNull($this->parsedElements);
         $this->parserToTest->send("ing\r\n");
         $this->assertSame(["OK", "morning"], $this->parsedElements);
 
