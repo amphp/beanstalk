@@ -24,7 +24,7 @@ class ParserTest extends TestCase {
     }
 
     public function testParsesFound() {
-        $this->parserToTest->send("FOUND 5 5\r\nhello\r");
+        $this->parserToTest->send("FOUND 5 5\r\nhello\r\n");
         $this->assertSame(["FOUND", 5, 'hello'], $this->parsedElements);
     }
 
@@ -32,20 +32,22 @@ class ParserTest extends TestCase {
         $this->parserToTest->send("RESERVED 2 30\r\n");
         $this->assertNull($this->parsedElements);
         $this->parserToTest->reset();
-        $this->parserToTest->send("RESERVED 5 5\r\nhello\r");
+        $this->parserToTest->send("RESERVED 5 5\r\nhello\r\n");
         $this->assertSame(["RESERVED", 5, 'hello'], $this->parsedElements);
     }
 
     public function testResetBuffer() {
-        $this->parserToTest->send("OK 5\r\nmorning\r");
-        $this->assertSame(["OK", "morni"], $this->parsedElements);
-        $this->parserToTest->send("fddfd\r\nbyebye\r");
-        $this->assertSame(["\rfddfd"], $this->parsedElements);
+        $this->parserToTest->send("OK 7\r\nmorn");
+        $this->assertSame(null, $this->parsedElements);
+        $this->parserToTest->send("ing\r\n");
+        $this->assertSame(["OK", "morning"], $this->parsedElements);
+
+        $this->parserToTest->send("OK 7\r\ntest");
 
         $this->parserToTest->reset();
 
-        $this->parserToTest->send("OK 5\r\nbyebye\r");
-        $this->assertSame(["OK", "byeby"], $this->parsedElements);
+        $this->parserToTest->send("OK 7\r\ntesting\r\n");
+        $this->assertSame(["OK", "testing"], $this->parsedElements);
     }
 
 
