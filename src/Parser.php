@@ -70,7 +70,7 @@ class Parser {
                 case "RESERVED":
                     $size = (int) $args[2];
 
-                    if (strlen($line) + 2 + strlen($this->buffer) < $size + 4) {
+                    if (strlen($line) + $size + 4 > strlen($this->buffer)) {
                         return;
                     }
 
