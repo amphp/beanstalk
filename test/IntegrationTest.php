@@ -115,4 +115,16 @@ class IntegrationTest extends TestCase {
             $this->assertEquals(0, $kicked);
         }));
     }
+
+    public function testReservedJobShouldHaveTheSamePayloadAsThePutPayload() {
+        wait(call(function () {
+            $jobId = yield $this->beanstalk->put(str_repeat('*', 65535));
+
+            yield $this->beanstalk->watch('default');
+            list($reservedJobId, $reservedJobPayload) = yield $this->beanstalk->reserve();
+
+            $this->assertSame($jobId, $reservedJobId);
+            $this->assertSame(65535, strlen($reservedJobPayload));
+        }));
+    }
 }
