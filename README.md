@@ -12,20 +12,36 @@
 composer require amphp/beanstalk
 ```
 
-## Usage
+## Examples
+
+More extensive code examples reside in the [`examples`](./examples) directory.
 
 ```php
-$beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300?tube=foobar");
+<?php
 
-$payload = json_encode([
-    "job" => bin2hex(random_bytes(16)),
-    "type" => "compress-image"
-    "path" => "/path/to/image.png"
-]);
+require __DIR__ . '/../vendor/autoload.php';
 
-$jobId = yield $beanstalk->put($payload);
+use Amp\Beanstalk\BeanstalkClient;
+use Amp\Loop;
+
+Loop::run(function () {
+    $beanstalk = new BeanstalkClient("tcp://127.0.0.1:11300");
+    yield $beanstalk->use('sometube');
+
+    $payload = json_encode([
+        "job" => bin2hex(random_bytes(16)),
+        "type" => "compress-image",
+        "path" => "/path/to/image.png"
+    ]);
+
+    $jobId = yield $beanstalk->put($payload);
+
+    echo "Inserted job id: $jobId\n";
+
+    $beanstalk->quit();
+});
+
 ```
+## License
 
-## More documentation
-
-More documentation can be found on [amphp.org/beanstalk](https://amphp.org/beanstalk/).
+The MIT License (MIT). Please see [`LICENSE`](./LICENSE) for more information.
