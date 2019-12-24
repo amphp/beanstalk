@@ -55,7 +55,7 @@ class BeanstalkClient {
                 while ($this->deferreds) {
                     /** @var Deferred $deferred */
                     $deferred = array_shift($this->deferreds);
-                    $deferred->fail(new BeanstalkException("Connection lost"));
+                    $deferred->fail(new ConnectionLostException("Connection lost"));
                 }
             }
         });
