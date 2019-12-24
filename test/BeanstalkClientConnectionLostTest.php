@@ -13,8 +13,8 @@ use function Amp\Socket\listen;
 
 class BeanstalkClientConnectionLostTest extends AsyncTestCase
 {
-    private const PORT_RANGE_MIN = 50000;
-    private const PORT_RANGE_MAX = 65535;
+    const PORT_RANGE_MIN = 50000;
+    const PORT_RANGE_MAX = 65535;
 
     /** @var Server */
     private $server;
