@@ -304,8 +304,8 @@ class BeanstalkClient {
     }
 
     public function quit() {
-        $this->isConnected = false;
         $this->send("quit\r\n");
+        $this->isConnected = false;
     }
 
     public function getJobStats(int $id): Promise {
