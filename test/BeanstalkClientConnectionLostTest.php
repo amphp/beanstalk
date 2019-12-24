@@ -1,4 +1,5 @@
 <?php
+
 namespace Amp\Beanstalk\Test;
 
 use Amp\Beanstalk\BeanstalkClient;
@@ -11,22 +12,19 @@ use function Amp\Promise\all;
 use function Amp\Promise\timeout;
 use function Amp\Socket\listen;
 
-class BeanstalkClientConnectionLostTest extends AsyncTestCase
-{
+class BeanstalkClientConnectionLostTest extends AsyncTestCase {
     const PORT_RANGE_MIN = 50000;
     const PORT_RANGE_MAX = 65535;
 
     /** @var Server */
     private $server;
 
-    public function setUp()
-    {
+    public function setUp() {
         parent::setUp();
         $this->server = $this->initServer();
     }
 
-    public function tearDown()
-    {
+    public function tearDown() {
         parent::tearDown();
         $this->server->close();
     }
@@ -40,8 +38,7 @@ class BeanstalkClientConnectionLostTest extends AsyncTestCase
      * @param $testFailTimeout int Milliseconds
      * @return \Generator
      */
-    public function testReserve($reserveTimeout, $connectionCloseTimeout, $testFailTimeout)
-    {
+    public function testReserve($reserveTimeout, $connectionCloseTimeout, $testFailTimeout) {
         $beanstalk = new BeanstalkClient(sprintf('tcp://%s', $this->server->getAddress()));
         $connectionClosePromise = call(function ($connectionCloseTimeout) {
             yield new Delayed($connectionCloseTimeout);
@@ -54,16 +51,14 @@ class BeanstalkClientConnectionLostTest extends AsyncTestCase
         ]), $testFailTimeout);
     }
 
-    public function dataProviderReserve(): array
-    {
+    public function dataProviderReserve(): array {
         return [
             'no timeout' => [null, 500, 600],
             'one second timeout' => [1, 900, 1100],
         ];
     }
 
-    private function initServer(): Server
-    {
+    private function initServer(): Server {
         for ($port = self::PORT_RANGE_MIN; $port <= self::PORT_RANGE_MAX; $port++) {
             try {
                 return listen(sprintf('tcp://127.0.0.1:%d', $port));
