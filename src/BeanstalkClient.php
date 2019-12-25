@@ -21,7 +21,6 @@ class BeanstalkClient {
 
     /** @var string */
     private $tube;
-    private $isConnected = false;
 
     public function __construct(string $uri) {
         $this->applyUri($uri);
@@ -40,7 +39,7 @@ class BeanstalkClient {
             }
         });
 
-        $this->connection->addEventHandler(["error"], function (Throwable $error = null) {
+        $this->connection->addEventHandler("error", function (Throwable $error = null) {
             if ($error) {
                 // Fail any outstanding promises
                 while ($this->deferreds) {
@@ -51,16 +50,11 @@ class BeanstalkClient {
             }
         });
         $this->connection->addEventHandler("close", function () {
-            if ($this->isConnected) {
-                while ($this->deferreds) {
-                    /** @var Deferred $deferred */
-                    $deferred = array_shift($this->deferreds);
-                    $deferred->fail(new ConnectionLostException("Connection lost"));
-                }
+            while ($this->deferreds) {
+                /** @var Deferred $deferred */
+                $deferred = array_shift($this->deferreds);
+                $deferred->fail(new ConnectionLostException("Connection lost"));
             }
-        });
-        $this->connection->addEventHandler("connect", function () {
-            $this->isConnected = true;
         });
 
         if ($this->tube) {
@@ -305,7 +299,6 @@ class BeanstalkClient {
 
     public function quit() {
         $this->send("quit\r\n");
-        $this->isConnected = false;
     }
 
     public function getJobStats(int $id): Promise {
