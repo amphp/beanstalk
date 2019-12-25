@@ -39,7 +39,7 @@ class BeanstalkClientConnectionLostTest extends AsyncTestCase {
      * @return \Generator
      */
     public function testReserve($reserveTimeout, $connectionCloseTimeout, $testFailTimeout) {
-        $beanstalk = new BeanstalkClient(sprintf('tcp://%s', $this->server->getAddress()));
+        $beanstalk = new BeanstalkClient("tcp://". $this->server->getAddress());
         $connectionClosePromise = call(function ($connectionCloseTimeout) {
             yield new Delayed($connectionCloseTimeout);
             $this->server->close();
@@ -53,18 +53,18 @@ class BeanstalkClientConnectionLostTest extends AsyncTestCase {
 
     public function dataProviderReserve(): array {
         return [
-            'no timeout' => [null, 500, 600],
-            'one second timeout' => [1, 900, 1100],
+            "no timeout" => [null, 500, 600],
+            "one second timeout" => [1, 900, 1100],
         ];
     }
 
     private function initServer(): Server {
         for ($port = self::PORT_RANGE_MIN; $port <= self::PORT_RANGE_MAX; $port++) {
             try {
-                return listen(sprintf('tcp://127.0.0.1:%d', $port));
+                return listen("tcp://127.0.0.1:". $port);
             } catch (SocketException $e) {
             }
         }
-        throw new \RuntimeException('No available port found');
+        throw new \RuntimeException("No available port found");
     }
 }
