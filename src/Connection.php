@@ -3,7 +3,7 @@
 namespace Amp\Beanstalk;
 
 use Amp\Deferred;
-use Amp\Socket\ClientConnectContext;
+use Amp\Socket\ConnectContext;
 use Amp\Socket\Socket;
 use Amp\Success;
 use Amp\Uri\Uri;
@@ -88,7 +88,7 @@ class Connection {
         }
 
         $this->connectPromisor = new Deferred;
-        $socketPromise = connect($this->uri, (new ClientConnectContext)->withConnectTimeout($this->timeout));
+        $socketPromise = connect($this->uri, (new ConnectContext)->withConnectTimeout($this->timeout));
 
         $socketPromise->onResolve(function ($error, $socket) {
             $connectPromisor = $this->connectPromisor;
