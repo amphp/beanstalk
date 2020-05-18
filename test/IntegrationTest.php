@@ -5,9 +5,9 @@ namespace Amp\Beanstalk\Test;
 use Amp\Beanstalk\BeanstalkClient;
 use Amp\Beanstalk\Stats\Job;
 use Amp\Beanstalk\Stats\System;
-use PHPUnit\Framework\TestCase;
 use function Amp\call;
 use function Amp\Promise\wait;
+use PHPUnit\Framework\TestCase;
 
 class IntegrationTest extends TestCase {
     /** @var BeanstalkClient */
