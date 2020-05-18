@@ -2,14 +2,14 @@
 
 namespace Amp\Beanstalk;
 
+use function Amp\asyncCall;
+use function Amp\call;
 use Amp\Deferred;
+use function Amp\Socket\connect;
 use Amp\Socket\ConnectContext;
 use Amp\Socket\Socket;
 use Amp\Success;
 use Amp\Uri\Uri;
-use function Amp\asyncCall;
-use function Amp\call;
-use function Amp\Socket\connect;
 
 class Connection {
     /** @var Deferred */
