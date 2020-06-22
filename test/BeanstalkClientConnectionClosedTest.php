@@ -10,7 +10,6 @@ use Amp\Socket\Server;
 use Amp\Socket\SocketException;
 use function Amp\call;
 use function Amp\Promise\all;
-use function Amp\Promise\timeout;
 use function Amp\Socket\listen;
 
 class BeanstalkClientConnectionClosedTest extends AsyncTestCase {
@@ -44,11 +43,12 @@ class BeanstalkClientConnectionClosedTest extends AsyncTestCase {
             yield new Delayed($connectionCloseTimeout);
             $this->server->close();
         }, $connectionCloseTimeout);
+        $this->setTimeout($testFailTimeout);
         $this->expectException(ConnectionClosedException::class);
-        yield timeout(all([
+        yield all([
             $beanstalk->reserve($reserveTimeout),
             $connectionClosePromise
-        ]), $testFailTimeout);
+        ]);
     }
 
     public function dataProviderReserve(): array {
