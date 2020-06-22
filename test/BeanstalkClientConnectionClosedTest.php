@@ -4,13 +4,12 @@ namespace Amp\Beanstalk\Test;
 
 use Amp\Beanstalk\BeanstalkClient;
 use Amp\Beanstalk\ConnectionClosedException;
+use function Amp\call;
 use Amp\Delayed;
 use Amp\PHPUnit\AsyncTestCase;
+use function Amp\Promise\all;
 use Amp\Socket\Server;
 use Amp\Socket\SocketException;
-use function Amp\call;
-use function Amp\Promise\all;
-use function Amp\Socket\listen;
 
 class BeanstalkClientConnectionClosedTest extends AsyncTestCase {
     /** @var Server */
@@ -21,7 +20,7 @@ class BeanstalkClientConnectionClosedTest extends AsyncTestCase {
      */
     public function setUp() {
         parent::setUp();
-        $this->server = listen("tcp://127.0.0.1:0");
+        $this->server = Server::listen("tcp://127.0.0.1:0");
     }
 
     public function tearDown() {
