@@ -12,7 +12,7 @@ use function Amp\Promise\all;
 use function Amp\Promise\timeout;
 use function Amp\Socket\listen;
 
-class BeanstalkClientConnectionLostTest extends AsyncTestCase {
+class BeanstalkClientConnectionClosedTest extends AsyncTestCase {
     const PORT_RANGE_MIN = 50000;
     const PORT_RANGE_MAX = 65535;
 
@@ -31,7 +31,7 @@ class BeanstalkClientConnectionLostTest extends AsyncTestCase {
 
     /**
      * @dataProvider dataProviderReserve
-     * @expectedException \Amp\Beanstalk\ConnectionLostException
+     * @expectedException \Amp\Beanstalk\ConnectionClosedException
      *
      * @param $reserveTimeout int|null Seconds
      * @param $connectionCloseTimeout int Milliseconds

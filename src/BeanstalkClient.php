@@ -45,7 +45,7 @@ class BeanstalkClient {
             }
         });
         $this->connection->addEventHandler("close", function () {
-            $this->failAllDeferreds(new ConnectionLostException("Connection lost"));
+            $this->failAllDeferreds(new ConnectionClosedException("Connection closed"));
         });
 
         if ($this->tube) {
