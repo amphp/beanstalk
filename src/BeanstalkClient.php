@@ -5,12 +5,12 @@ namespace Amp\Beanstalk;
 use Amp\Beanstalk\Stats\Job;
 use Amp\Beanstalk\Stats\System;
 use Amp\Beanstalk\Stats\Tube;
+use function Amp\call;
 use Amp\Deferred;
 use Amp\Promise;
 use Amp\Uri\Uri;
 use Symfony\Component\Yaml\Yaml;
 use Throwable;
-use function Amp\call;
 
 class BeanstalkClient {
     /** @var Deferred[] */
