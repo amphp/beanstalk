@@ -13,15 +13,15 @@ use function Amp\Promise\all;
 use function Amp\Socket\listen;
 
 class BeanstalkClientConnectionClosedTest extends AsyncTestCase {
-    const PORT_RANGE_MIN = 50000;
-    const PORT_RANGE_MAX = 65535;
-
     /** @var Server */
     private $server;
 
+    /**
+     * @throws SocketException
+     */
     public function setUp() {
         parent::setUp();
-        $this->server = $this->initServer();
+        $this->server = listen("tcp://127.0.0.1:0");
     }
 
     public function tearDown() {
@@ -56,15 +56,5 @@ class BeanstalkClientConnectionClosedTest extends AsyncTestCase {
             "no timeout" => [null, 500, 600],
             "one second timeout" => [1, 900, 1100],
         ];
-    }
-
-    private function initServer(): Server {
-        for ($port = self::PORT_RANGE_MIN; $port <= self::PORT_RANGE_MAX; $port++) {
-            try {
-                return listen("tcp://127.0.0.1:". $port);
-            } catch (SocketException $e) {
-            }
-        }
-        throw new \RuntimeException("No available port found");
     }
 }
