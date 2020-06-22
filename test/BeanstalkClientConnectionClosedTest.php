@@ -3,6 +3,7 @@
 namespace Amp\Beanstalk\Test;
 
 use Amp\Beanstalk\BeanstalkClient;
+use Amp\Beanstalk\ConnectionClosedException;
 use Amp\Delayed;
 use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket\Server;
@@ -31,7 +32,6 @@ class BeanstalkClientConnectionClosedTest extends AsyncTestCase {
 
     /**
      * @dataProvider dataProviderReserve
-     * @expectedException \Amp\Beanstalk\ConnectionClosedException
      *
      * @param $reserveTimeout int|null Seconds
      * @param $connectionCloseTimeout int Milliseconds
@@ -44,7 +44,7 @@ class BeanstalkClientConnectionClosedTest extends AsyncTestCase {
             yield new Delayed($connectionCloseTimeout);
             $this->server->close();
         }, $connectionCloseTimeout);
-
+        $this->expectException(ConnectionClosedException::class);
         yield timeout(all([
             $beanstalk->reserve($reserveTimeout),
             $connectionClosePromise
