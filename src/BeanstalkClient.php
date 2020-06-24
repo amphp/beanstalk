@@ -39,15 +39,13 @@ class BeanstalkClient {
             }
         });
 
-        $this->connection->addEventHandler(["close", "error"], function (Throwable $error = null) {
+        $this->connection->addEventHandler("error", function (Throwable $error = null) {
             if ($error) {
-                // Fail any outstanding promises
-                while ($this->deferreds) {
-                    /** @var Deferred $deferred */
-                    $deferred = array_shift($this->deferreds);
-                    $deferred->fail($error);
-                }
+                $this->failAllDeferreds($error);
             }
+        });
+        $this->connection->addEventHandler("close", function () {
+            $this->failAllDeferreds(new ConnectionClosedException("Connection closed"));
         });
 
         if ($this->tube) {
@@ -443,5 +441,14 @@ class BeanstalkClient {
                 }
             }
         );
+    }
+
+    private function failAllDeferreds(Throwable $error) {
+        // Fail any outstanding promises
+        while ($this->deferreds) {
+            /** @var Deferred $deferred */
+            $deferred = array_shift($this->deferreds);
+            $deferred->fail($error);
+        }
     }
 }
