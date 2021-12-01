@@ -2,33 +2,41 @@
 
 namespace Amp\Beanstalk\Test;
 
+use Amp\Beanstalk\BadFormatException;
+use Amp\Beanstalk\InternalErrorException;
+use Amp\Beanstalk\OutOfMemoryException;
 use Amp\Beanstalk\Parser;
+use Amp\Beanstalk\UnknownCommandException;
+use Exception;
 use PHPUnit\Framework\TestCase;
 
 class ParserTest extends TestCase {
-    protected $parserToTest;
+    protected Parser $parserToTest;
 
-    protected $parsedElements;
+    /**
+     * @var null|list<scalar>|Exception
+     */
+    protected null|array|Exception $parsedElements = null;
 
-    public function setUp() {
+    public function setUp(): void {
         $this->parserToTest = new Parser(function ($result) {
             $this->parsedElements = $result;
         });
     }
 
-    public function testParsesPartialResponseCorrectly() {
+    public function testParsesPartialResponseCorrectly(): void {
         $this->parserToTest->send("OK 5\r\nhello\r");
         $this->assertNull($this->parsedElements);
         $this->parserToTest->send("\n");
         $this->assertSame(["OK", "hello"], $this->parsedElements);
     }
 
-    public function testParsesFound() {
+    public function testParsesFound(): void {
         $this->parserToTest->send("FOUND 5 5\r\nhello\r\n");
         $this->assertSame(["FOUND", 5, 'hello'], $this->parsedElements);
     }
 
-    public function testParsesReserved() {
+    public function testParsesReserved(): void {
         $this->parserToTest->send("RESERVED 2 30\r\n");
         $this->assertNull($this->parsedElements);
         $this->parserToTest->reset();
@@ -36,7 +44,7 @@ class ParserTest extends TestCase {
         $this->assertSame(["RESERVED", 5, 'hello'], $this->parsedElements);
     }
 
-    public function testResetBuffer() {
+    public function testResetBuffer(): void {
         $this->parserToTest->send("OK 7\r\nmorn");
         $this->assertNull($this->parsedElements);
         $this->parserToTest->send("ing\r\n");
@@ -54,28 +62,29 @@ class ParserTest extends TestCase {
     /**
      * @dataProvider dataProviderTestExceptions
      */
-    public function testParserExceptions($buffer, $exceptionExpected) {
+    public function testParserExceptions(string $buffer, string $exceptionExpected): void {
         $this->parserToTest->send($buffer);
         $this->assertInstanceOf($exceptionExpected, $this->parsedElements);
     }
 
-    public function dataProviderTestExceptions() {
+    public function dataProviderTestExceptions(): array
+    {
         return [
             [
                 "OUT_OF_MEMORY\r\nhello\r",
-                \Amp\Beanstalk\OutOfMemoryException::class
+                OutOfMemoryException::class
             ],
             [
                 "INTERNAL_ERROR\r\nhello\r",
-                \Amp\Beanstalk\InternalErrorException::class
+                InternalErrorException::class
             ],
             [
                 "BAD_FORMAT\r\nhello\r",
-                \Amp\Beanstalk\BadFormatException::class
+                BadFormatException::class
             ],
             [
                 "UNKNOWN_COMMAND\r\nhello\r",
-                \Amp\Beanstalk\UnknownCommandException::class
+                UnknownCommandException::class
             ]
         ];
     }

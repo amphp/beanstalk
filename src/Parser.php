@@ -2,6 +2,8 @@
 
 namespace Amp\Beanstalk;
 
+use Closure;
+
 class Parser {
     const CRLF = "\r\n";
 
@@ -10,11 +12,11 @@ class Parser {
     const ERROR_BAD_FORMAT = "BAD_FORMAT";
     const ERROR_UNKNOWN_COMMAND = "UNKNOWN_COMMAND";
 
-    private $responseCallback;
-    private $buffer = "";
+    private Closure $responseCallback;
+    private string $buffer = "";
 
     public function __construct(callable $responseCallback) {
-        $this->responseCallback = $responseCallback;
+        $this->responseCallback = $responseCallback(...);
     }
 
     public function send(string $bytes) {

@@ -5,22 +5,18 @@ namespace Amp\Beanstalk;
 use Amp\Beanstalk\Stats\Job;
 use Amp\Beanstalk\Stats\System;
 use Amp\Beanstalk\Stats\Tube;
-use function Amp\call;
 use Amp\Deferred;
-use Amp\Promise;
 use Amp\Uri\Uri;
 use Symfony\Component\Yaml\Yaml;
 use Throwable;
 
 class BeanstalkClient {
     /** @var Deferred[] */
-    private $deferreds;
+    private array $deferreds;
 
-    /** @var Connection */
-    private $connection;
+    private Connection $connection;
 
-    /** @var string */
-    private $tube;
+    private ?string $tube;
 
     public function __construct(string $uri) {
         $this->applyUri($uri);
@@ -29,13 +25,12 @@ class BeanstalkClient {
 
         $this->connection = new Connection($uri);
         $this->connection->addEventHandler("response", function ($response) {
-            /** @var Deferred $deferred */
             $deferred = array_shift($this->deferreds);
 
             if ($response instanceof Throwable) {
-                $deferred->fail($response);
+                $deferred->error($response);
             } else {
-                $deferred->resolve($response);
+                $deferred->complete($response);
             }
         });
 
@@ -61,394 +56,302 @@ class BeanstalkClient {
         $this->tube = (new Uri($uri))->getQueryParameter("tube");
     }
 
-    private function send(string $message, callable $transform = null): Promise {
-        return call(function () use ($message, $transform) {
-            $this->deferreds[] = $deferred = new Deferred;
-            $promise = $deferred->promise();
+    private function send(string $message): array {
+        $this->deferreds[] = $deferred = new Deferred;
 
-            yield $this->connection->send($message);
-            $response = yield $promise;
-
-            return $transform ? $transform($response) : $response;
-        });
+        $this->connection->send($message);
+        return $deferred->getFuture()->await();
     }
 
-    public function use(string $tube) {
-        return $this->send("use " . $tube . "\r\n", function () use ($tube) {
-            $this->tube = $tube;
-            return null;
-        });
+    public function use(string $tube): void {
+        $this->send("use " . $tube . "\r\n");
+        $this->tube = $tube;
     }
 
-    public function pause(string $tube, int $delay): Promise {
+    public function pause(string $tube, int $delay): void {
         $payload = "pause-tube $tube $delay\r\n";
+        $response = $this->send($payload);
+        $type = $response[0];
+        switch ($type) {
+            case "PAUSED":
+                return;
 
-        return $this->send($payload, function (array $response) use ($tube) {
-            list($type) = $response;
+            case "NOT_FOUND":
+                throw new NotFoundException("Tube with name $tube is not found");
 
-            switch ($type) {
-                case "PAUSED":
-                    return null;
-
-                case "NOT_FOUND":
-                    throw new NotFoundException("Tube with name $tube is not found");
-
-                default:
-                    throw new BeanstalkException("Unknown response: " . $type);
-            }
-        });
+            default:
+                throw new BeanstalkException("Unknown response: " . $type);
+        }
     }
 
-    public function put(string $payload, int $timeout = 60, int $delay = 0, $priority = 0): Promise {
+    public function put(string $payload, int $timeout = 60, int $delay = 0, $priority = 0): int {
         $payload = "put $priority $delay $timeout " . strlen($payload) . "\r\n$payload\r\n";
 
-        return $this->send($payload, function (array $response): int {
-            list($type) = $response;
+        $response = $this->send($payload);
+        $type = $response[0];
 
-            switch ($type) {
-                case "INSERTED":
-                case "BURIED":
-                    return (int) $response[1];
-
-                case "EXPECTED_CRLF":
-                    throw new ExpectedCrlfException;
-
-                case "JOB_TOO_BIG":
-                    throw new JobTooBigException;
-
-                case "DRAINING":
-                    throw new DrainingException;
-
-                default:
-                    throw new BeanstalkException("Unknown response: " . $type);
-            }
-        });
+        return match ($type) {
+            "INSERTED", "BURIED" => (int) $response[1],
+            "EXPECTED_CRLF" => throw new ExpectedCrlfException,
+            "JOB_TOO_BIG" => throw new JobTooBigException,
+            "DRAINING" => throw new DrainingException,
+            default => throw new BeanstalkException("Unknown response: " . $type),
+        };
     }
 
-    public function reserve(int $timeout = null): Promise {
+    public function reserve(int $timeout = null): array {
         $payload = $timeout === null ? "reserve\r\n" : "reserve-with-timeout $timeout\r\n";
 
-        return $this->send($payload, function (array $response): array {
-            list($type) = $response;
+        $response = $this->send($payload);
+        $type = $response[0];
 
-            switch ($type) {
-                case "DEADLINE_SOON":
-                    throw new DeadlineSoonException;
-
-                case "TIMED_OUT":
-                    throw new TimedOutException;
-
-                case "RESERVED":
-                    return [$response[1], $response[2]];
-
-                default:
-                    throw new BeanstalkException("Unknown response: " . $type);
-            }
-        });
+        return match ($type) {
+            "DEADLINE_SOON" => throw new DeadlineSoonException(),
+            "TIMED_OUT" => throw new TimedOutException(),
+            "RESERVED" => [$response[1], $response[2]],
+            default => throw new BeanstalkException("Unknown response: " . $type),
+        };
     }
 
-    public function delete(int $id): Promise {
+    public function delete(int $id): bool {
         $payload = "delete $id\r\n";
 
-        return $this->send($payload, function (array $response): int {
-            list($type) = $response;
+        $response = $this->send($payload);
+        list($type) = $response;
 
-            switch ($type) {
-                case "DELETED":
-                    return true;
-
-                case "NOT_FOUND":
-                    return false;
-
-                default:
-                    throw new BeanstalkException("Unknown response: " . $type);
-            }
-        });
+        return match ($type) {
+            "DELETED" => true,
+            "NOT_FOUND" => false,
+            default => throw new BeanstalkException("Unknown response: " . $type),
+        };
     }
 
-    public function release(int $id, int $delay = 0, int $priority = 0): Promise {
+    public function release(int $id, int $delay = 0, int $priority = 0): string {
         $payload = "release $id $priority $delay\r\n";
+        $response = $this->send($payload);
+        list($type) = $response;
 
-        return $this->send($payload, function (array $response): string {
-            list($type) = $response;
-
-            switch ($type) {
-                case "BURIED":
-                case "RELEASED":
-                case "NOT_FOUND":
-                    return $type;
-
-                default:
-                    throw new BeanstalkException("Unknown response: " . $type);
-            }
-        });
+        return match ($type) {
+            "BURIED", "RELEASED", "NOT_FOUND" => $type,
+            default => throw new BeanstalkException("Unknown response: " . $type),
+        };
     }
 
-    public function bury(int $id, int $priority = 0): Promise {
+    public function bury(int $id, int $priority = 0): bool {
         $payload = "bury $id $priority\r\n";
 
-        return $this->send($payload, function (array $response): int {
-            list($type) = $response;
+        $response = $this->send($payload);
+        list($type) = $response;
 
-            switch ($type) {
-                case "BURIED":
-                    return true;
-
-                case "NOT_FOUND":
-                    return false;
-
-                default:
-                    throw new BeanstalkException("Unknown response: " . $type);
-            }
-        });
+        return match ($type) {
+            "BURIED" => true,
+            "NOT_FOUND" => false,
+            default => throw new BeanstalkException("Unknown response: " . $type),
+        };
     }
 
-    public function kickJob(int $id): Promise {
+    public function kickJob(int $id): bool {
         $payload = "kick-job $id\r\n";
 
-        return $this->send($payload, function (array $response): bool {
-            list($type) = $response;
+        $response = $this->send($payload);
+        list($type) = $response;
 
-            switch ($type) {
-                case "KICKED":
-                    return true;
-
-                case "NOT_FOUND":
-                    return false;
-
-                default:
-                    throw new BeanstalkException("Unknown response: $type");
-            }
-        });
+        return match ($type) {
+            "KICKED" => true,
+            "NOT_FOUND" => false,
+            default => throw new BeanstalkException("Unknown response: $type"),
+        };
     }
 
-    public function kick(int $count): Promise {
+    public function kick(int $count): int {
         $payload = "kick $count\r\n";
 
-        return $this->send($payload, function (array $response): int {
-            list($type) = $response;
+        $response = $this->send($payload);
+        list($type) = $response;
 
-            switch ($type) {
-                case "KICKED":
-                    return (int) $response[1];
-
-                default:
-                    throw new BeanstalkException("Unknown response: $type");
-            }
-        });
+        return match ($type) {
+            "KICKED" => (int)$response[1],
+            default => throw new BeanstalkException("Unknown response: $type"),
+        };
     }
 
-    public function touch(int $id): Promise {
+    public function touch(int $id): bool {
         $payload = "touch $id\r\n";
 
-        return $this->send($payload, function (array $response): int {
-            list($type) = $response;
+        $response = $this->send($payload);
+        list($type) = $response;
 
-            switch ($type) {
-                case "TOUCHED":
-                    return true;
-
-                case "NOT_FOUND":
-                    return false;
-
-                default:
-                    throw new BeanstalkException("Unknown response: " . $type);
-            }
-        });
+        return match ($type) {
+            "TOUCHED" => true,
+            "NOT_FOUND" => false,
+            default => throw new BeanstalkException("Unknown response: " . $type),
+        };
     }
 
-    public function watch(string $tube): Promise {
+    public function watch(string $tube): int {
         $payload = "watch $tube\r\n";
 
-        return $this->send($payload, function (array $response): int {
-            if ($response[0] !== "WATCHING") {
-                throw new BeanstalkException("Unknown response: " . $response[0]);
-            }
+        $response = $this->send($payload);
+        if ($response[0] !== "WATCHING") {
+            throw new BeanstalkException("Unknown response: " . $response[0]);
+        }
 
-            return (int) $response[1];
-        });
+        return (int) $response[1];
     }
 
-    public function ignore(string $tube): Promise {
+    public function ignore(string $tube): int {
         $payload = "ignore $tube\r\n";
 
-        return $this->send($payload, function (array $response): int {
-            list($type) = $response;
+        $response = $this->send($payload);
+        list($type) = $response;
 
-            switch ($type) {
-                case "WATCHING":
-                    return (int) $response[1];
+        switch ($type) {
+            case "WATCHING":
+                return (int) $response[1];
 
-                case "NOT_IGNORED":
-                    throw new NotIgnoredException;
+            case "NOT_IGNORED":
+                throw new NotIgnoredException;
 
-                default:
-                    throw new BeanstalkException("Unknown response: " . $type);
-            }
-        });
+            default:
+                throw new BeanstalkException("Unknown response: " . $type);
+        }
     }
 
-    public function quit() {
+    public function quit(): void {
         $this->send("quit\r\n");
     }
 
-    public function getJobStats(int $id): Promise {
+    public function getJobStats(int $id): Job {
         $payload = "stats-job $id\r\n";
+        $response = $this->send($payload);
 
-        return $this->send($payload, function (array $response) use ($id): Job {
-            list($type) = $response;
+        list($type) = $response;
 
-            switch ($type) {
-                case "OK":
-                    return new Job(Yaml::parse($response[1]));
-
-                case "NOT_FOUND":
-                    throw new NotFoundException("Job with $id is not found");
-
-                default:
-                    throw new BeanstalkException("Unknown response: " . $type);
-            }
-        });
+        return match ($type) {
+            "OK" => new Job(Yaml::parse($response[1])),
+            "NOT_FOUND" => throw new NotFoundException("Job with $id is not found"),
+            default => throw new BeanstalkException("Unknown response: " . $type),
+        };
     }
 
-    public function getTubeStats(string $tube): Promise {
+    public function getTubeStats(string $tube): Tube {
         $payload = "stats-tube $tube\r\n";
+        $response = $this->send($payload);
 
-        return $this->send($payload, function (array $response) use ($tube): Tube {
-            list($type) = $response;
+        list($type) = $response;
 
-            switch ($type) {
-                case "OK":
-                    return new Tube(Yaml::parse($response[1]));
-
-                case "NOT_FOUND":
-                    throw new NotFoundException("Tube $tube is not found");
-
-                default:
-                    throw new BeanstalkException("Unknown response: " . $type);
-            }
-        });
+        return match ($type) {
+            "OK" => new Tube(Yaml::parse($response[1])),
+            "NOT_FOUND" => throw new NotFoundException("Tube $tube is not found"),
+            default => throw new BeanstalkException("Unknown response: " . $type),
+        };
     }
 
-    public function getSystemStats(): Promise {
+    public function getSystemStats(): System {
         $payload = "stats\r\n";
 
-        return $this->send($payload, function (array $response): System {
-            if ($response[0] !== "OK") {
-                throw new BeanstalkException("Unknown response: " . $response[0]);
-            }
+        $response = $this->send($payload);
+        if ($response[0] !== "OK") {
+            throw new BeanstalkException("Unknown response: " . $response[0]);
+        }
 
-            return new System(Yaml::parse($response[1]));
-        });
+        return new System(Yaml::parse($response[1]));
     }
 
-    public function listTubes(): Promise {
+    public function listTubes(): array {
         $payload = "list-tubes\r\n";
 
-        return $this->send($payload, function (array $response): array {
-            list($type) = $response;
+        $response = $this->send($payload);
+        list($type) = $response;
 
-            switch ($type) {
-                case "OK":
-                    return Yaml::parse($response[1]);
+        switch ($type) {
+            case "OK":
+                return Yaml::parse($response[1]);
 
-                default:
-                    throw new BeanstalkException("Unknown response: " . $type);
-            }
-        });
+            default:
+                throw new BeanstalkException("Unknown response: " . $type);
+        }
     }
 
-    public function listWatchedTubes(): Promise {
+    public function listWatchedTubes(): array {
         $payload = "list-tubes-watched\r\n";
 
-        return $this->send($payload, function (array $response): array {
-            list($type) = $response;
+        $response = $this->send($payload);
+        list($type) = $response;
 
-            switch ($type) {
-                case "OK":
-                    return Yaml::parse($response[1]);
+        switch ($type) {
+            case "OK":
+                return Yaml::parse($response[1]);
 
-                default:
-                    throw new BeanstalkException("Unknown response: " . $type);
-            }
-        });
+            default:
+                throw new BeanstalkException("Unknown response: " . $type);
+        }
     }
 
-    public function getUsedTube(): Promise {
+    public function getUsedTube(): string {
         $payload = "list-tube-used\r\n";
 
-        return $this->send($payload, function (array $response): string {
-            list($type) = $response;
+        $response = $this->send($payload);
+        list($type) = $response;
 
-            switch ($type) {
-                case "USING":
-                    return $response[1];
+        switch ($type) {
+            case "USING":
+                return $response[1];
 
-                default:
-                    throw new BeanstalkException("Unknown response: " . $type);
-            }
-        });
+            default:
+                throw new BeanstalkException("Unknown response: " . $type);
+        }
     }
 
     public function peek(int $id): Promise {
         $payload = "peek $id\r\n";
 
-        return $this->send($payload, function (array $response) use ($id): string {
-            list($type) = $response;
+        $response = $this->send($payload);
+        list($type) = $response;
 
-            switch ($type) {
-                case "FOUND":
-                    return $response[2];
+        switch ($type) {
+            case "FOUND":
+                return $response[2];
 
-                case "NOT_FOUND":
-                    throw new NotFoundException("Job with $id is not found");
+            case "NOT_FOUND":
+                throw new NotFoundException("Job with $id is not found");
 
-                default:
-                    throw new BeanstalkException("Unknown response: " . $type);
-            }
-        });
+            default:
+                throw new BeanstalkException("Unknown response: " . $type);
+        }
     }
 
-    public function peekReady(): Promise {
+    public function peekReady(): string {
         return $this->peekInState('ready');
     }
 
-    public function peekDelayed(): Promise {
+    public function peekDelayed(): string {
         return $this->peekInState('delayed');
     }
 
-    public function peekBuried(): Promise {
+    public function peekBuried(): string {
         return $this->peekInState('buried');
     }
 
-    private function peekInState(string $state): Promise {
+    private function peekInState(string $state): string {
         $payload = "peek-$state\r\n";
 
-        return $this->send(
-            $payload,
-            function (array $response) use ($state): string {
-                list($type) = $response;
+        $response = $this->send($payload);
+        list($type) = $response;
 
-                switch ($type) {
-                    case "FOUND":
-                        return $response[2];
-
-                    case "NOT_FOUND":
-                        throw new NotFoundException("No Job in $state state");
-
-                    default:
-                        throw new BeanstalkException("Unknown response: " . $type);
-                }
-            }
-        );
+        return match ($type) {
+            "FOUND" => $response[2],
+            "NOT_FOUND" => throw new NotFoundException("No Job in $state state"),
+            default => throw new BeanstalkException("Unknown response: " . $type),
+        };
     }
 
-    private function failAllDeferreds(Throwable $error) {
+    private function failAllDeferreds(Throwable $error): void {
         // Fail any outstanding promises
         while ($this->deferreds) {
             /** @var Deferred $deferred */
             $deferred = array_shift($this->deferreds);
-            $deferred->fail($error);
+            $deferred->error($error);
         }
     }
 }

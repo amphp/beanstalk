@@ -2,10 +2,17 @@
 
 namespace Amp\Beanstalk\Stats;
 
-use Amp\Struct;
-
 class Job {
-    use Struct;
+
+    public function __get(string $property): never
+    {
+        throw new \Error("Property $property does not exist");
+    }
+
+    public function __set(string $property, mixed $value): never
+    {
+        throw new \Error("Property $property does not exist");
+    }
 
     const STATE_READY = "ready";
     const STATE_DELAYED = "delayed";

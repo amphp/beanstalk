@@ -2,10 +2,17 @@
 
 namespace Amp\Beanstalk\Stats;
 
-use Amp\Struct;
-
 class System {
-    use Struct;
+
+    public function __get(string $property): never
+    {
+        throw new \Error("Property $property does not exist");
+    }
+
+    public function __set(string $property, mixed $value): never
+    {
+        throw new \Error("Property $property does not exist");
+    }
 
     public function __construct(array $struct) {
         $this->currentJobsUrgent = (int) $struct["current-jobs-urgent"];
