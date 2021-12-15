@@ -3,14 +3,11 @@
 namespace Amp\Beanstalk\Stats;
 
 class System {
-
-    public function __get(string $property): never
-    {
+    public function __get(string $property): never {
         throw new \Error("Property $property does not exist");
     }
 
-    public function __set(string $property, mixed $value): never
-    {
+    public function __set(string $property, mixed $value): never {
         throw new \Error("Property $property does not exist");
     }
 

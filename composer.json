@@ -28,7 +28,7 @@
         "symfony/yaml": "^3.3|^4|^5|^6"
     },
     "require-dev": {
-        "amphp/phpunit-util": "^2",
+        "amphp/phpunit-util": "^3",
         "phpunit/phpunit": "^9",
         "friendsofphp/php-cs-fixer": "^3"
     },

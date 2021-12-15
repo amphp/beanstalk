@@ -4,8 +4,8 @@ namespace Amp\Beanstalk\Test;
 
 use Amp\Beanstalk\BeanstalkClient;
 use Amp\Beanstalk\ConnectionClosedException;
-use Amp\Deferred;
 use Amp\PHPUnit\AsyncTestCase;
+use Amp\PHPUnit\UnhandledException;
 use Amp\Socket\Server;
 use Amp\Socket\SocketException;
 use Revolt\EventLoop;
@@ -37,13 +37,14 @@ class BeanstalkClientConnectionClosedTest extends AsyncTestCase {
     public function testReserve(?int $reserveTimeout, int $connectionCloseTimeout, int $testFailTimeout): void {
         $beanstalk = new BeanstalkClient("tcp://". $this->server->getAddress());
         $suspension = EventLoop::createSuspension();
-        EventLoop::delay($connectionCloseTimeout / 1000, function() use ($suspension,$connectionCloseTimeout) {
+        EventLoop::delay($connectionCloseTimeout / 1000, function () use ($suspension, $connectionCloseTimeout) {
             $this->server->close();
             $suspension->resume();
         });
         $this->setTimeout($testFailTimeout);
-        $this->expectException(ConnectionClosedException::class);
-        EventLoop::defer(function() use($beanstalk, $reserveTimeout){
+        $this->expectException(UnhandledException::class);
+        $this->expectExceptionMessage(ConnectionClosedException::class);
+        EventLoop::defer(function () use ($beanstalk, $reserveTimeout) {
             $beanstalk->reserve($reserveTimeout);
         });
         $suspension->suspend();

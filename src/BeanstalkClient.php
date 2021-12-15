@@ -5,15 +5,10 @@ namespace Amp\Beanstalk;
 use Amp\Beanstalk\Stats\Job;
 use Amp\Beanstalk\Stats\System;
 use Amp\Beanstalk\Stats\Tube;
-use Amp\Deferred;
 use Amp\Uri\Uri;
 use Symfony\Component\Yaml\Yaml;
-use Throwable;
 
 class BeanstalkClient {
-    /** @var Deferred[] */
-    private array $deferreds;
-
     private Connection $connection;
 
     private ?string $tube;
@@ -21,46 +16,20 @@ class BeanstalkClient {
     public function __construct(string $uri) {
         $this->applyUri($uri);
 
-        $this->deferreds = [];
-
         $this->connection = new Connection($uri);
-        $this->connection->addEventHandler("response", function ($response) {
-            $deferred = array_shift($this->deferreds);
-
-            if ($response instanceof Throwable) {
-                $deferred->error($response);
-            } else {
-                $deferred->complete($response);
-            }
-        });
-
-        $this->connection->addEventHandler("error", function (Throwable $error = null) {
-            if ($error) {
-                $this->failAllDeferreds($error);
-            }
-        });
-        $this->connection->addEventHandler("close", function () {
-            $this->failAllDeferreds(new ConnectionClosedException("Connection closed"));
-        });
 
         if ($this->tube) {
-            $this->connection->addEventHandler("connect", function () {
-                array_unshift($this->deferreds, new Deferred);
-
-                return "use $this->tube\r\n";
-            });
+            $this->send("use $this->tube\r\n");
         }
     }
 
-    private function applyUri(string $uri) {
+    private function applyUri(string $uri): void {
         $this->tube = (new Uri($uri))->getQueryParameter("tube");
     }
 
     private function send(string $message): array {
-        $this->deferreds[] = $deferred = new Deferred;
-
         $this->connection->send($message);
-        return $deferred->getFuture()->await();
+        return $this->connection->awaitResponse();
     }
 
     public function use(string $tube): void {
@@ -170,7 +139,7 @@ class BeanstalkClient {
         list($type) = $response;
 
         return match ($type) {
-            "KICKED" => (int)$response[1],
+            "KICKED" => (int) $response[1],
             default => throw new BeanstalkException("Unknown response: $type"),
         };
     }
@@ -218,7 +187,11 @@ class BeanstalkClient {
     }
 
     public function quit(): void {
-        $this->send("quit\r\n");
+        try {
+            $this->send("quit\r\n");
+        } catch (ConnectionClosedException) {
+            // Okay
+        }
     }
 
     public function getJobStats(int $id): Job {
@@ -303,7 +276,7 @@ class BeanstalkClient {
         }
     }
 
-    public function peek(int $id): Promise {
+    public function peek(int $id): string {
         $payload = "peek $id\r\n";
 
         $response = $this->send($payload);
@@ -344,14 +317,5 @@ class BeanstalkClient {
             "NOT_FOUND" => throw new NotFoundException("No Job in $state state"),
             default => throw new BeanstalkException("Unknown response: " . $type),
         };
-    }
-
-    private function failAllDeferreds(Throwable $error): void {
-        // Fail any outstanding promises
-        while ($this->deferreds) {
-            /** @var Deferred $deferred */
-            $deferred = array_shift($this->deferreds);
-            $deferred->error($error);
-        }
     }
 }

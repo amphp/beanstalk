@@ -67,8 +67,7 @@ class ParserTest extends TestCase {
         $this->assertInstanceOf($exceptionExpected, $this->parsedElements);
     }
 
-    public function dataProviderTestExceptions(): array
-    {
+    public function dataProviderTestExceptions(): array {
         return [
             [
                 "OUT_OF_MEMORY\r\nhello\r",
