@@ -11,8 +11,7 @@ use Amp\Socket\SocketException;
 use Revolt\EventLoop;
 
 class BeanstalkClientConnectionClosedTest extends AsyncTestCase {
-    /** @var Server */
-    private $server;
+    private Server $server;
 
     /**
      * @throws SocketException

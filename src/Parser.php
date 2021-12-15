@@ -16,7 +16,7 @@ class Parser {
     private string $buffer = "";
 
     public function __construct(callable $responseCallback) {
-        $this->responseCallback = $responseCallback(...);
+        $this->responseCallback = fn(...$args) => $responseCallback(...$args);
     }
 
     public function send(string $bytes) {

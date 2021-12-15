@@ -21,7 +21,6 @@
   "minimum-stability": "dev",
   "prefer-stable": true,
   "require": {
-        "php": "^8.1",
         "amphp/amp": "^3",
         "amphp/socket": "^2",
         "amphp/uri": "^0.1",

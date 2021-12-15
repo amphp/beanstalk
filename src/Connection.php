@@ -17,14 +17,7 @@ class Connection {
 
     private ?Socket $socket = null;
 
-    /** @var string */
     private string $uri;
-
-//    /**
-//     * @var DeferredFuture[]
-//     * On connect, all handlers are triggered and removed
-//     */
-//    private array $connectHandlers = [];
 
     /**
      * @var DeferredFuture[]
@@ -32,34 +25,14 @@ class Connection {
      */
     private array $responseHandlers = [];
 
-//    /**
-//     * @var DeferredFuture[]
-//     * On error, all handlers are triggered and removed
-//     */
-//    private array $errorHandlers = [];
-
-//    /**
-//     * @var DeferredFuture[]
-//     * On close, all handlers are triggered and removed
-//     */
-//    private array $closeHandlers = [];
-
     private ?Future $connectFuture = null;
 
     public function __construct(string $uri) {
         $this->applyUri($uri);
 
         $this->parser = new Parser(function ($response) {
-//            var_dump("Parser response");
             $handler = array_shift($this->responseHandlers);
-//            var_dump("complete " . spl_object_id($handler));
             $handler->complete($response);
-//            if ($response instanceof BadFormatException) {
-//                foreach($this->errorHandlers as $errorHandler) {
-//                    $errorHandler->complete($response);
-//                }
-//                $this->errorHandlers = [];
-//            }
         });
     }
 
@@ -71,46 +44,25 @@ class Connection {
     }
 
     public function awaitResponse(): mixed {
-        $df = ($this->responseHandlers[] = new DeferredFuture());
-        $val = $df->getFuture()->await();
-        return $val;
+        return ($this->responseHandlers[] = new DeferredFuture())->getFuture()->await();
     }
 
-//    public function awaitError(): mixed
-//    {
-//        return ($this->errorHandlers[] = new DeferredFuture())->getFuture()->await();
-//    }
-
     public function send(string $payload): void {
-//        var_dump(__LINE__);
         $this->connect();
-//        var_dump(__LINE__);
         $this->socket->write($payload);
-//        var_dump(__LINE__);
     }
 
     private function connect(): void {
         $this->connectFuture ??= async(function () {
-//            var_dump("do connect");
             try {
                 $this->socket = connect($this->uri, (new ConnectContext)->withConnectTimeout($this->timeout));
-//                var_dump("connect done");
             } catch (\Throwable $error) {
-//                var_dump("connect fail");
                 throw new ConnectException(
-                    "Connection attempt failed",
-                    $code = 0,
-                    $error
+                    message: "Connection attempt failed",
+                    code:  0,
+                    previous: $error
                 );
             }
-
-//            foreach ($this->handlers["connect"] as $handler) {
-//                $pipelinedCommand = $handler();
-//
-//                if (!empty($pipelinedCommand)) {
-//                    $this->socket->write($pipelinedCommand);
-//                }
-//            }
             async(function () {
                 while (null !== $chunk = $this->socket->read()) {
                     $this->parser->send($chunk);
@@ -118,9 +70,7 @@ class Connection {
                 $this->close();
             });
         });
-//        var_dump("connect()");
         $this->connectFuture->await();
-//        var_dump("connect() awaited");
     }
 
     public function close() {

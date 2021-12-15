@@ -3,11 +3,11 @@
 namespace Amp\Beanstalk\Stats;
 
 class Tube {
-    public function __get(string $property): never {
+    public function __get(string $property): void {
         throw new \Error("Property $property does not exist");
     }
 
-    public function __set(string $property, mixed $value): never {
+    public function __set(string $property, mixed $value): void {
         throw new \Error("Property $property does not exist");
     }
 
@@ -28,18 +28,18 @@ class Tube {
         $this->pauseTimeLeft = (int) $struct["pause-time-left"];
     }
 
-    public $name;
-    public $currentJobsUrgent;
-    public $currentJobsReady;
-    public $currentJobsReserved;
-    public $currentJobsDelayed;
-    public $currentJobsBuried;
-    public $totalJobs;
-    public $currentUsing;
-    public $currentWaiting;
-    public $currentWatching;
-    public $pause;
-    public $cmdDelete;
-    public $cmdPauseTube;
-    public $pauseTimeLeft;
+    public mixed $name;
+    public int $currentJobsUrgent;
+    public int $currentJobsReady;
+    public int $currentJobsReserved;
+    public int $currentJobsDelayed;
+    public int $currentJobsBuried;
+    public int $totalJobs;
+    public int $currentUsing;
+    public int $currentWaiting;
+    public int $currentWatching;
+    public int $pause;
+    public int $cmdDelete;
+    public int $cmdPauseTube;
+    public int $pauseTimeLeft;
 }
