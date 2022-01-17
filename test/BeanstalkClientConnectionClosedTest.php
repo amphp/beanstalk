@@ -6,19 +6,20 @@ use Amp\Beanstalk\BeanstalkClient;
 use Amp\Beanstalk\ConnectionClosedException;
 use Amp\PHPUnit\AsyncTestCase;
 use Amp\PHPUnit\UnhandledException;
-use Amp\Socket\Server;
+use Amp\Socket\ResourceSocketServer;
 use Amp\Socket\SocketException;
 use Revolt\EventLoop;
+use function Amp\Socket\listen;
 
 class BeanstalkClientConnectionClosedTest extends AsyncTestCase {
-    private Server $server;
+    private ResourceSocketServer $server;
 
     /**
      * @throws SocketException
      */
     public function setUp(): void {
         parent::setUp();
-        $this->server = Server::listen("tcp://127.0.0.1:0");
+        $this->server = listen("tcp://127.0.0.1:0");
     }
 
     public function tearDown(): void {
