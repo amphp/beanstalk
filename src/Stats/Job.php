@@ -2,10 +2,14 @@
 
 namespace Amp\Beanstalk\Stats;
 
-use Amp\Struct;
-
 class Job {
-    use Struct;
+    public function __get(string $property): void {
+        throw new \Error("Property $property does not exist");
+    }
+
+    public function __set(string $property, mixed $value): void {
+        throw new \Error("Property $property does not exist");
+    }
 
     const STATE_READY = "ready";
     const STATE_DELAYED = "delayed";
@@ -29,18 +33,18 @@ class Job {
         $this->kicks = (int) $struct["kicks"];
     }
 
-    public $id;
-    public $tube;
-    public $state;
-    public $priority;
-    public $age;
-    public $delay;
-    public $ttr;
-    public $timeLeft;
-    public $file;
-    public $reserves;
-    public $timeouts;
-    public $releases;
-    public $buries;
-    public $kicks;
+    public int $id;
+    public mixed $tube;
+    public mixed $state;
+    public int $priority;
+    public int $age;
+    public int $delay;
+    public int $ttr;
+    public int $timeLeft;
+    public mixed $file;
+    public int $reserves;
+    public int $timeouts;
+    public int $releases;
+    public int $buries;
+    public int $kicks;
 }

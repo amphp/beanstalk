@@ -2,10 +2,14 @@
 
 namespace Amp\Beanstalk\Stats;
 
-use Amp\Struct;
-
 class System {
-    use Struct;
+    public function __get(string $property) {
+        throw new \Error("Property $property does not exist");
+    }
+
+    public function __set(string $property, mixed $value) {
+        throw new \Error("Property $property does not exist");
+    }
 
     public function __construct(array $struct) {
         $this->currentJobsUrgent = (int) $struct["current-jobs-urgent"];
@@ -56,50 +60,50 @@ class System {
         $this->hostname = $struct["hostname"];
     }
 
-    public $currentJobsUrgent;
-    public $currentJobsReady;
-    public $currentJobsReserved;
-    public $currentJobsDelayed;
-    public $currentJobsBuried;
-    public $cmdPut;
-    public $cmdPeek;
-    public $cmdPeekReady;
-    public $cmdPeekDelayed;
-    public $cmdPeekBuried;
-    public $cmdReserve;
-    public $cmdUse;
-    public $cmdWatch;
-    public $cmdIgnore;
-    public $cmdDelete;
-    public $cmdRelease;
-    public $cmdBury;
-    public $cmdKick;
-    public $cmdStats;
-    public $cmdStatsJob;
-    public $cmdStatsTube;
-    public $cmdListTubes;
-    public $cmdListTubeUsed;
-    public $cmdListTubesWatched;
-    public $cmdPauseTube;
-    public $jobTimeouts;
-    public $totalJobs;
-    public $maxJobSize;
-    public $currentTubes;
-    public $currentConnections;
-    public $currentProducers;
-    public $currentWorkers;
-    public $currentWaiting;
-    public $totalConnections;
-    public $pid;
-    public $version;
-    public $rusageUtime;
-    public $rusageStime;
-    public $uptime;
-    public $binlogOldestIndex;
-    public $binlogCurrentIndex;
-    public $binlogMaxSize;
-    public $binlogRecordsWritten;
-    public $binlogRecordsMigrated;
-    public $id;
-    public $hostname;
+    public int $currentJobsUrgent;
+    public int $currentJobsReady;
+    public int $currentJobsReserved;
+    public int $currentJobsDelayed;
+    public int $currentJobsBuried;
+    public int $cmdPut;
+    public int $cmdPeek;
+    public int $cmdPeekReady;
+    public int $cmdPeekDelayed;
+    public int $cmdPeekBuried;
+    public int $cmdReserve;
+    public int $cmdUse;
+    public int $cmdWatch;
+    public int $cmdIgnore;
+    public int $cmdDelete;
+    public int $cmdRelease;
+    public int $cmdBury;
+    public int $cmdKick;
+    public int $cmdStats;
+    public int $cmdStatsJob;
+    public int $cmdStatsTube;
+    public int $cmdListTubes;
+    public int $cmdListTubeUsed;
+    public int $cmdListTubesWatched;
+    public int $cmdPauseTube;
+    public int $jobTimeouts;
+    public int $totalJobs;
+    public int $maxJobSize;
+    public int $currentTubes;
+    public int $currentConnections;
+    public int $currentProducers;
+    public int $currentWorkers;
+    public int $currentWaiting;
+    public int $totalConnections;
+    public int $pid;
+    public mixed $version;
+    public float $rusageUtime;
+    public float $rusageStime;
+    public int $uptime;
+    public int $binlogOldestIndex;
+    public int $binlogCurrentIndex;
+    public int $binlogMaxSize;
+    public int $binlogRecordsWritten;
+    public int $binlogRecordsMigrated;
+    public mixed $id;
+    public mixed $hostname;
 }

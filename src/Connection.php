@@ -2,51 +2,37 @@
 
 namespace Amp\Beanstalk;
 
-use function Amp\asyncCall;
-use function Amp\call;
-use Amp\Deferred;
+use function Amp\async;
+use Amp\DeferredFuture;
+use Amp\Future;
 use function Amp\Socket\connect;
 use Amp\Socket\ConnectContext;
 use Amp\Socket\Socket;
-use Amp\Success;
 use Amp\Uri\Uri;
 
 class Connection {
-    /** @var Deferred */
-    private $connectPromisor;
+    private Parser $parser;
 
-    /** @var Parser */
-    private $parser;
+    private int $timeout = 5000;
 
-    /** @var int */
-    private $timeout = 5000;
+    private ?Socket $socket = null;
 
-    /** @var Socket */
-    private $socket;
+    private string $uri;
 
-    /** @var string */
-    private $uri;
+    /**
+     * @var DeferredFuture[]
+     * On response, the top handler is triggered and removed
+     */
+    private array $responseHandlers = [];
 
-    /** @var callable[][] */
-    private $handlers;
+    private ?Future $connectFuture = null;
 
     public function __construct(string $uri) {
         $this->applyUri($uri);
-        $this->handlers = [
-            "connect" => [],
-            "response" => [],
-            "error" => [],
-            "close" => [],
-        ];
 
         $this->parser = new Parser(function ($response) {
-            foreach ($this->handlers["response"] as $handler) {
-                $handler($response);
-            }
-
-            if ($response instanceof BadFormatException) {
-                $this->onError($response);
-            }
+            $handler = array_shift($this->responseHandlers);
+            $handler->complete($response);
         });
     }
 
@@ -57,95 +43,46 @@ class Connection {
         $this->uri = $uri->getScheme() . "://" . $uri->getHost() . ":" . $uri->getPort();
     }
 
-    public function addEventHandler($events, callable $callback) {
-        $events = (array) $events;
-
-        foreach ($events as $event) {
-            if (!isset($this->handlers[$event])) {
-                throw new \Error("Unknown event: " . $event);
-            }
-
-            $this->handlers[$event][] = $callback;
-        }
+    public function awaitResponse(): mixed {
+        return ($this->responseHandlers[] = new DeferredFuture())->getFuture()->await();
     }
 
-    public function send(string $payload) {
-        return call(function () use ($payload) {
-            yield $this->connect();
-            yield $this->socket->write($payload);
-        });
+    public function send(string $payload): void {
+        $this->connect();
+        $this->socket->write($payload);
     }
 
-    private function connect() {
-        // If we're in the process of connecting already return that same promise
-        if ($this->connectPromisor) {
-            return $this->connectPromisor->promise();
-        }
-
-        // If a read watcher exists we know we're already connected
-        if ($this->socket) {
-            return new Success;
-        }
-
-        $this->connectPromisor = new Deferred;
-        $socketPromise = connect($this->uri, (new ConnectContext)->withConnectTimeout($this->timeout));
-
-        $socketPromise->onResolve(function ($error, $socket) {
-            $connectPromisor = $this->connectPromisor;
-            $this->connectPromisor = null;
-
-            if ($error) {
-                $connectPromisor->fail(new ConnectException(
-                    "Connection attempt failed",
-                    $code = 0,
-                    $error
-                ));
-
-                return;
+    private function connect(): void {
+        $this->connectFuture ??= async(function () {
+            try {
+                $this->socket = connect($this->uri, (new ConnectContext)->withConnectTimeout($this->timeout));
+            } catch (\Throwable $error) {
+                throw new ConnectException(
+                    message: "Connection attempt failed",
+                    code:  0,
+                    previous: $error
+                );
             }
-
-            $this->socket = $socket;
-
-            foreach ($this->handlers["connect"] as $handler) {
-                $pipelinedCommand = $handler();
-
-                if (!empty($pipelinedCommand)) {
-                    $this->socket->write($pipelinedCommand);
-                }
-            }
-
-            asyncCall(function () {
-                while (null !== $chunk = yield $this->socket->read()) {
+            async(function () {
+                while (null !== $chunk = $this->socket->read()) {
                     $this->parser->send($chunk);
                 }
-
                 $this->close();
             });
-
-            $connectPromisor->resolve();
         });
-
-        return $this->connectPromisor->promise();
-    }
-
-    private function onError(\Throwable $exception) {
-        foreach ($this->handlers["error"] as $handler) {
-            $handler($exception);
-        }
-
-        $this->close();
+        $this->connectFuture->await();
     }
 
     public function close() {
+        // Fail all response handlers
+        while ($responseHandler = array_shift($this->responseHandlers)) {
+            $responseHandler->error(new ConnectionClosedException());
+        }
         $this->parser->reset();
 
         if ($this->socket) {
             $this->socket->close();
             $this->socket = null;
-        }
-
-        foreach ($this->handlers["close"] as $handler) {
-            $handler();
         }
     }
 

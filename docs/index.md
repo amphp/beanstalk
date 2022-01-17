@@ -20,7 +20,7 @@ $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300");
 // can connect to the server with an additional tube query parameter.
 // $beanstalk = new Amp\Beanstalk\BeanstalkClient("tcp://127.0.0.1:11300?tube=foobar");
 
-$systemStats = yield $beanstalk->getSystemStats();
+$systemStats = $beanstalk->getSystemStats();
 
 $readyJobs = $systemStats->currentJobsReady;
 ```
