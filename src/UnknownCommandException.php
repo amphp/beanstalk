@@ -2,5 +2,6 @@
 
 namespace Amp\Beanstalk;
 
-class UnknownCommandException extends BeanstalkException {
+class UnknownCommandException extends BeanstalkException
+{
 }

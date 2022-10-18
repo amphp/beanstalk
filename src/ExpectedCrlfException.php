@@ -2,5 +2,6 @@
 
 namespace Amp\Beanstalk;
 
-class ExpectedCrlfException extends BeanstalkException {
+class ExpectedCrlfException extends BeanstalkException
+{
 }

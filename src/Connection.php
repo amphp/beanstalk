@@ -11,7 +11,8 @@ use Amp\Socket\Socket;
 use Amp\Success;
 use Amp\Uri\Uri;
 
-class Connection {
+class Connection
+{
     /** @var Deferred */
     private $connectPromisor;
 
@@ -30,7 +31,8 @@ class Connection {
     /** @var callable[][] */
     private $handlers;
 
-    public function __construct(string $uri) {
+    public function __construct(string $uri)
+    {
         $this->applyUri($uri);
         $this->handlers = [
             "connect" => [],
@@ -50,14 +52,16 @@ class Connection {
         });
     }
 
-    private function applyUri($uri) {
+    private function applyUri($uri): void
+    {
         $uri = new Uri($uri);
 
         $this->timeout = (int) ($uri->getQueryParameter("timeout") ?? $this->timeout);
         $this->uri = $uri->getScheme() . "://" . $uri->getHost() . ":" . $uri->getPort();
     }
 
-    public function addEventHandler($events, callable $callback) {
+    public function addEventHandler($events, callable $callback): void
+    {
         $events = (array) $events;
 
         foreach ($events as $event) {
@@ -69,14 +73,16 @@ class Connection {
         }
     }
 
-    public function send(string $payload) {
+    public function send(string $payload)
+    {
         return call(function () use ($payload) {
             yield $this->connect();
             yield $this->socket->write($payload);
         });
     }
 
-    private function connect() {
+    private function connect(): Success
+    {
         // If we're in the process of connecting already return that same promise
         if ($this->connectPromisor) {
             return $this->connectPromisor->promise();
@@ -128,7 +134,8 @@ class Connection {
         return $this->connectPromisor->promise();
     }
 
-    private function onError(\Throwable $exception) {
+    private function onError(\Throwable $exception): void
+    {
         foreach ($this->handlers["error"] as $handler) {
             $handler($exception);
         }
@@ -136,7 +143,8 @@ class Connection {
         $this->close();
     }
 
-    public function close() {
+    public function close(): void
+    {
         $this->parser->reset();
 
         if ($this->socket) {
@@ -149,7 +157,8 @@ class Connection {
         }
     }
 
-    public function __destruct() {
+    public function __destruct()
+    {
         $this->close();
     }
 }

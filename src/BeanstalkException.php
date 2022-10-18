@@ -2,5 +2,6 @@
 
 namespace Amp\Beanstalk;
 
-class BeanstalkException extends \Exception {
+class BeanstalkException extends \Exception
+{
 }

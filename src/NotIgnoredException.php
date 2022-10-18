@@ -2,5 +2,6 @@
 
 namespace Amp\Beanstalk;
 
-class NotIgnoredException extends BeanstalkException {
+class NotIgnoredException extends BeanstalkException
+{
 }

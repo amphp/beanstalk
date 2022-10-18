@@ -13,20 +13,17 @@
             "Amp\\Beanstalk\\": "src"
         }
     },
+    "minimum-stability": "beta",
+    "prefer-stable": true,
     "require": {
-        "amphp/amp": "^2",
-        "amphp/socket": "^1.0",
+        "php": "^8.1",
+        "amphp/amp": "^3",
+        "amphp/socket": "^2",
         "amphp/uri": "^0.1",
         "symfony/yaml": "^3.3|^4|^5"
     },
     "require-dev": {
-        "amphp/phpunit-util": "^1",
-        "phpunit/phpunit": "^6",
-        "friendsofphp/php-cs-fixer": "^2.3"
-    },
-    "config": {
-        "platform": {
-            "php": "7.1.0"
-        }
+        "phpunit/phpunit": "^9.5.23",
+        "friendsofphp/php-cs-fixer": "^3"
     }
 }

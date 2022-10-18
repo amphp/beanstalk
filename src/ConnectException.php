@@ -2,5 +2,6 @@
 
 namespace Amp\Beanstalk;
 
-class ConnectException extends BeanstalkException {
+class ConnectException extends BeanstalkException
+{
 }

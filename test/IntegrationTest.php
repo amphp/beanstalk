@@ -9,11 +9,13 @@ use function Amp\call;
 use function Amp\Promise\wait;
 use PHPUnit\Framework\TestCase;
 
-class IntegrationTest extends TestCase {
+class IntegrationTest extends TestCase
+{
     /** @var BeanstalkClient */
     private $beanstalk;
 
-    public function setUp() {
+    public function setUp(): void
+    {
         if (!\getenv("AMP_TEST_BEANSTALK_INTEGRATION") && !\getenv("TRAVIS")) {
             $this->markTestSkipped("You need to set AMP_TEST_BEANSTALK_INTEGRATION=1 in order to run the integration tests.");
         }
@@ -29,7 +31,8 @@ class IntegrationTest extends TestCase {
         }));
     }
 
-    public function testPut() {
+    public function testPut(): void
+    {
         wait(call(function () {
             /** @var System $statsBefore */
             $statsBefore = yield $this->beanstalk->getSystemStats();
@@ -51,7 +54,8 @@ class IntegrationTest extends TestCase {
         }));
     }
 
-    public function testPeek() {
+    public function testPeek(): void
+    {
         wait(call(function () {
             $jobId = yield $this->beanstalk->put('I am ready');
             $this->assertInternalType("int", $jobId);
@@ -74,7 +78,8 @@ class IntegrationTest extends TestCase {
         }));
     }
 
-    public function testKickJob() {
+    public function testKickJob(): void
+    {
         wait(call(function () {
             $jobId = yield $this->beanstalk->put("hi");
             $this->assertInternalType("int", $jobId);
@@ -94,7 +99,8 @@ class IntegrationTest extends TestCase {
         }));
     }
 
-    public function testKick() {
+    public function testKick(): void
+    {
         wait(call(function () {
             for ($i = 0; $i < 10; $i++) {
                 yield $this->beanstalk->put("Job $i");
@@ -116,7 +122,8 @@ class IntegrationTest extends TestCase {
         }));
     }
 
-    public function testReservedJobShouldHaveTheSamePayloadAsThePutPayload() {
+    public function testReservedJobShouldHaveTheSamePayloadAsThePutPayload(): void
+    {
         wait(call(function () {
             $jobId = yield $this->beanstalk->put(str_repeat('*', 65535));
 

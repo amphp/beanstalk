@@ -4,10 +4,12 @@ namespace Amp\Beanstalk\Stats;
 
 use Amp\Struct;
 
-class Tube {
+class Tube
+{
     use Struct;
 
-    public function __construct(array $struct) {
+    public function __construct(array $struct)
+    {
         $this->name = $struct["name"];
         $this->currentJobsUrgent = (int) $struct["current-jobs-urgent"];
         $this->currentJobsReady = (int) $struct["current-jobs-ready"];

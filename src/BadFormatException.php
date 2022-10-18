@@ -2,5 +2,6 @@
 
 namespace Amp\Beanstalk;
 
-class BadFormatException extends BeanstalkException {
+class BadFormatException extends BeanstalkException
+{
 }
