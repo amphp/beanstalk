@@ -2,5 +2,6 @@
 
 namespace Amp\Beanstalk;
 
-class DrainingException extends BeanstalkException {
+class DrainingException extends BeanstalkException
+{
 }

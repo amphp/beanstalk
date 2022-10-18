@@ -2,58 +2,61 @@
 
 namespace Amp\Beanstalk\Test;
 
+use function Amp\async;
 use Amp\Beanstalk\BeanstalkClient;
 use Amp\Beanstalk\ConnectionClosedException;
-use function Amp\call;
-use Amp\Delayed;
+use function Amp\delay;
+use Amp\Future;
 use Amp\PHPUnit\AsyncTestCase;
-use function Amp\Promise\all;
-use Amp\Socket\Server;
-use Amp\Socket\SocketException;
+use Amp\Socket\InternetAddress;
+use Amp\Socket\ResourceSocketServerFactory;
+use Amp\Socket\SocketServer;
 
-class BeanstalkClientConnectionClosedTest extends AsyncTestCase {
-    /** @var Server */
-    private $server;
+class BeanstalkClientConnectionClosedTest extends AsyncTestCase
+{
+    private SocketServer $server;
 
-    /**
-     * @throws SocketException
-     */
-    public function setUp() {
+    public function setUp(): void
+    {
         parent::setUp();
-        $this->server = Server::listen("tcp://127.0.0.1:0");
+
+        $this->server = (new ResourceSocketServerFactory)->listen(new InternetAddress('127.0.0.1', 0));
     }
 
-    public function tearDown() {
+    public function tearDown(): void
+    {
         parent::tearDown();
+
         $this->server->close();
     }
 
     /**
-     * @dataProvider dataProviderReserve
-     *
-     * @param $reserveTimeout int|null Seconds
-     * @param $connectionCloseTimeout int Milliseconds
-     * @param $testFailTimeout int Milliseconds
-     * @return \Generator
+     * @dataProvider provideReserveTimeouts
      */
-    public function testReserve($reserveTimeout, $connectionCloseTimeout, $testFailTimeout) {
-        $beanstalk = new BeanstalkClient("tcp://". $this->server->getAddress());
-        $connectionClosePromise = call(function ($connectionCloseTimeout) {
-            yield new Delayed($connectionCloseTimeout);
+    public function testReserve(?int $reserveTimeout, float $connectionCloseTimeout, float $testFailTimeout): void
+    {
+        $beanstalk = new BeanstalkClient('tcp://' . $this->server->getAddress());
+
+        $connectionClosePromise = async(function () use ($connectionCloseTimeout) {
+            delay($connectionCloseTimeout);
+
             $this->server->close();
-        }, $connectionCloseTimeout);
+        });
+
         $this->setTimeout($testFailTimeout);
         $this->expectException(ConnectionClosedException::class);
-        yield all([
+
+        Future\awaitAll([
             $beanstalk->reserve($reserveTimeout),
             $connectionClosePromise
         ]);
     }
 
-    public function dataProviderReserve(): array {
+    public function provideReserveTimeouts(): iterable
+    {
         return [
-            "no timeout" => [null, 500, 600],
-            "one second timeout" => [1, 900, 1100],
+            'no timeout' => [null, .5, .6],
+            'one second timeout' => [1, .9, 1.1],
         ];
     }
 }

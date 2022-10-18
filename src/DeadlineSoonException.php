@@ -2,5 +2,6 @@
 
 namespace Amp\Beanstalk;
 
-class DeadlineSoonException extends BeanstalkException {
+class DeadlineSoonException extends BeanstalkException
+{
 }

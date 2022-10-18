@@ -5,30 +5,35 @@ namespace Amp\Beanstalk\Test;
 use Amp\Beanstalk\Parser;
 use PHPUnit\Framework\TestCase;
 
-class ParserTest extends TestCase {
-    protected $parserToTest;
+class ParserTest extends TestCase
+{
+    protected Parser $parserToTest;
 
-    protected $parsedElements;
+    protected mixed $parsedElements = null;
 
-    public function setUp() {
+    public function setUp(): void
+    {
         $this->parserToTest = new Parser(function ($result) {
             $this->parsedElements = $result;
         });
     }
 
-    public function testParsesPartialResponseCorrectly() {
+    public function testParsesPartialResponseCorrectly(): void
+    {
         $this->parserToTest->send("OK 5\r\nhello\r");
         $this->assertNull($this->parsedElements);
         $this->parserToTest->send("\n");
         $this->assertSame(["OK", "hello"], $this->parsedElements);
     }
 
-    public function testParsesFound() {
+    public function testParsesFound(): void
+    {
         $this->parserToTest->send("FOUND 5 5\r\nhello\r\n");
         $this->assertSame(["FOUND", 5, 'hello'], $this->parsedElements);
     }
 
-    public function testParsesReserved() {
+    public function testParsesReserved(): void
+    {
         $this->parserToTest->send("RESERVED 2 30\r\n");
         $this->assertNull($this->parsedElements);
         $this->parserToTest->reset();
@@ -36,7 +41,8 @@ class ParserTest extends TestCase {
         $this->assertSame(["RESERVED", 5, 'hello'], $this->parsedElements);
     }
 
-    public function testResetBuffer() {
+    public function testResetBuffer(): void
+    {
         $this->parserToTest->send("OK 7\r\nmorn");
         $this->assertNull($this->parsedElements);
         $this->parserToTest->send("ing\r\n");
@@ -54,12 +60,14 @@ class ParserTest extends TestCase {
     /**
      * @dataProvider dataProviderTestExceptions
      */
-    public function testParserExceptions($buffer, $exceptionExpected) {
+    public function testParserExceptions($buffer, $exceptionExpected): void
+    {
         $this->parserToTest->send($buffer);
         $this->assertInstanceOf($exceptionExpected, $this->parsedElements);
     }
 
-    public function dataProviderTestExceptions() {
+    public function dataProviderTestExceptions(): array
+    {
         return [
             [
                 "OUT_OF_MEMORY\r\nhello\r",

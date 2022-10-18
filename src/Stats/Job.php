@@ -2,17 +2,15 @@
 
 namespace Amp\Beanstalk\Stats;
 
-use Amp\Struct;
-
-class Job {
-    use Struct;
-
+class Job
+{
     const STATE_READY = "ready";
     const STATE_DELAYED = "delayed";
     const STATE_RESERVED = "reserved";
     const STATE_BURIED = "buried";
 
-    public function __construct(array $struct) {
+    public function __construct(array $struct)
+    {
         $this->id = (int) $struct["id"];
         $this->tube = $struct["tube"];
         $this->state = $struct["state"];

@@ -2,5 +2,6 @@
 
 namespace Amp\Beanstalk;
 
-class TimedOutException extends BeanstalkException {
+class TimedOutException extends BeanstalkException
+{
 }

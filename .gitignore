@@ -1,5 +1,8 @@
+/.*/
+!/.github/
 /coverage/
 /composer.lock
 /vendor/
 /protocol.txt
-/.php_cs.cache
+/.php-cs-fixer.cache
+.phpunit.result.cache

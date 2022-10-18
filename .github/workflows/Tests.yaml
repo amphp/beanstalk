@@ -1,0 +1,59 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  Test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php:
+          - 8.1
+        dependencies:
+          - hi
+          - lo
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Beanstalk
+        run: sudo apt-get install --yes beanstalkd
+
+      - name: Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: xdebug
+
+      - name: Validate composer.json
+        run: composer validate
+
+      - name: Cache dependencies
+        id: composer-cache
+        uses: actions/cache@v3
+        with:
+          path: vendor
+          key: php-${{ matrix.php }}-${{ matrix.dependencies }}-${{ hashFiles('composer.json') }}
+          restore-keys: php-${{ matrix.php }}-${{ matrix.dependencies }}-
+
+      - name: Install dependencies ${{ matrix.dependencies == 'lo' && '(lowest)' || '' }}
+        run: composer update --no-interaction --no-progress
+          ${{ matrix.dependencies == 'lo' && '--prefer-lowest' || '' }}
+
+      - name: Run test suite with coverage
+        run: composer test -- --coverage-clover=build/logs/clover.xml
+        env:
+          AMP_TEST_BEANSTALK_INTEGRATION: 1
+
+      - name: Check code style
+        run: composer cs
+
+      - name: Upload test coverage
+        run: composer global require php-coveralls/php-coveralls && php-coveralls -v
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}

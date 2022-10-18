@@ -2,5 +2,6 @@
 
 namespace Amp\Beanstalk;
 
-class NotFoundException extends BeanstalkException {
+class NotFoundException extends BeanstalkException
+{
 }

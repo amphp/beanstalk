@@ -2,7 +2,8 @@
 
 namespace Amp\Beanstalk;
 
-class Parser {
+class Parser
+{
     const CRLF = "\r\n";
 
     const ERROR_OUT_OF_MEMORY = "OUT_OF_MEMORY";
@@ -13,11 +14,13 @@ class Parser {
     private $responseCallback;
     private $buffer = "";
 
-    public function __construct(callable $responseCallback) {
+    public function __construct(callable $responseCallback)
+    {
         $this->responseCallback = $responseCallback;
     }
 
-    public function send(string $bytes) {
+    public function send(string $bytes): void
+    {
         $this->buffer .= $bytes;
 
         do {
@@ -88,7 +91,8 @@ class Parser {
         } while (isset($this->buffer[0]));
     }
 
-    public function reset() {
+    public function reset(): void
+    {
         $this->buffer = "";
     }
 }

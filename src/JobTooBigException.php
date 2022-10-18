@@ -2,5 +2,6 @@
 
 namespace Amp\Beanstalk;
 
-class JobTooBigException extends BeanstalkException {
+class JobTooBigException extends BeanstalkException
+{
 }
