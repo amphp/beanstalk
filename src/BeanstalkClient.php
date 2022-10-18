@@ -468,9 +468,9 @@ class BeanstalkClient
     {
         // Fail any outstanding promises
         while ($this->deferreds) {
-            /** @var Deferred $deferred */
+            /** @var DeferredFuture $deferred */
             $deferred = array_shift($this->deferreds);
-            $deferred->fail($error);
+            $deferred->error($error);
         }
     }
 }

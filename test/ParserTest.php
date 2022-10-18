@@ -9,7 +9,7 @@ class ParserTest extends TestCase
 {
     protected Parser $parserToTest;
 
-    protected $parsedElements;
+    protected mixed $parsedElements = null;
 
     public function setUp(): void
     {

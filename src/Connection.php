@@ -2,9 +2,9 @@
 
 namespace Amp\Beanstalk;
 
+use function Amp\async;
 use Amp\DeferredFuture;
 use Amp\Future;
-use function Amp\async;
 use function Amp\Socket\connect;
 use Amp\Socket\ConnectContext;
 use Amp\Socket\Socket;
