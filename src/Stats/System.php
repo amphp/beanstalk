@@ -2,12 +2,8 @@
 
 namespace Amp\Beanstalk\Stats;
 
-use Amp\Struct;
-
 class System
 {
-    use Struct;
-
     public function __construct(array $struct)
     {
         $this->currentJobsUrgent = (int) $struct["current-jobs-urgent"];

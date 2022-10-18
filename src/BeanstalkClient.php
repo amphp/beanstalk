@@ -5,23 +5,19 @@ namespace Amp\Beanstalk;
 use Amp\Beanstalk\Stats\Job;
 use Amp\Beanstalk\Stats\System;
 use Amp\Beanstalk\Stats\Tube;
-use function Amp\call;
-use Amp\Deferred;
-use Amp\Promise;
+use Amp\DeferredFuture;
 use Amp\Uri\Uri;
 use Symfony\Component\Yaml\Yaml;
 use Throwable;
 
 class BeanstalkClient
 {
-    /** @var Deferred[] */
-    private $deferreds;
+    /** @var DeferredFuture[] */
+    private array $deferreds;
 
-    /** @var Connection */
-    private $connection;
+    private Connection $connection;
 
-    /** @var string */
-    private $tube;
+    private ?string $tube;
 
     public function __construct(string $uri)
     {
@@ -31,13 +27,12 @@ class BeanstalkClient
 
         $this->connection = new Connection($uri);
         $this->connection->addEventHandler("response", function ($response) {
-            /** @var Deferred $deferred */
             $deferred = array_shift($this->deferreds);
 
             if ($response instanceof Throwable) {
-                $deferred->fail($response);
+                $deferred->error($response);
             } else {
-                $deferred->resolve($response);
+                $deferred->complete($response);
             }
         });
 
@@ -52,7 +47,7 @@ class BeanstalkClient
 
         if ($this->tube) {
             $this->connection->addEventHandler("connect", function () {
-                array_unshift($this->deferreds, new Deferred);
+                array_unshift($this->deferreds, new DeferredFuture());
 
                 return "use $this->tube\r\n";
             });
@@ -64,20 +59,18 @@ class BeanstalkClient
         $this->tube = (new Uri($uri))->getQueryParameter("tube");
     }
 
-    private function send(string $message, callable $transform = null): Promise
+    private function send(string $message, callable $transform = null)
     {
-        return call(function () use ($message, $transform) {
-            $this->deferreds[] = $deferred = new Deferred;
-            $promise = $deferred->promise();
+        $this->deferreds[] = $deferred = new DeferredFuture();
+        $future = $deferred->getFuture();
 
-            yield $this->connection->send($message);
-            $response = yield $promise;
+        $this->connection->send($message);
+        $response = $future->await();
 
-            return $transform ? $transform($response) : $response;
-        });
+        return $transform ? $transform($response) : $response;
     }
 
-    public function use(string $tube): Promise
+    public function use(string $tube)
     {
         return $this->send("use " . $tube . "\r\n", function () use ($tube) {
             $this->tube = $tube;
@@ -85,7 +78,7 @@ class BeanstalkClient
         });
     }
 
-    public function pause(string $tube, int $delay): Promise
+    public function pause(string $tube, int $delay)
     {
         $payload = "pause-tube $tube $delay\r\n";
 
@@ -105,7 +98,7 @@ class BeanstalkClient
         });
     }
 
-    public function put(string $payload, int $timeout = 60, int $delay = 0, $priority = 0): Promise
+    public function put(string $payload, int $timeout = 60, int $delay = 0, $priority = 0)
     {
         $payload = "put $priority $delay $timeout " . strlen($payload) . "\r\n$payload\r\n";
 
@@ -132,7 +125,7 @@ class BeanstalkClient
         });
     }
 
-    public function reserve(int $timeout = null): Promise
+    public function reserve(int $timeout = null)
     {
         $payload = $timeout === null ? "reserve\r\n" : "reserve-with-timeout $timeout\r\n";
 
@@ -155,7 +148,7 @@ class BeanstalkClient
         });
     }
 
-    public function delete(int $id): Promise
+    public function delete(int $id)
     {
         $payload = "delete $id\r\n";
 
@@ -175,7 +168,7 @@ class BeanstalkClient
         });
     }
 
-    public function release(int $id, int $delay = 0, int $priority = 0): Promise
+    public function release(int $id, int $delay = 0, int $priority = 0)
     {
         $payload = "release $id $priority $delay\r\n";
 
@@ -194,7 +187,7 @@ class BeanstalkClient
         });
     }
 
-    public function bury(int $id, int $priority = 0): Promise
+    public function bury(int $id, int $priority = 0)
     {
         $payload = "bury $id $priority\r\n";
 
@@ -214,7 +207,7 @@ class BeanstalkClient
         });
     }
 
-    public function kickJob(int $id): Promise
+    public function kickJob(int $id)
     {
         $payload = "kick-job $id\r\n";
 
@@ -234,7 +227,7 @@ class BeanstalkClient
         });
     }
 
-    public function kick(int $count): Promise
+    public function kick(int $count)
     {
         $payload = "kick $count\r\n";
 
@@ -251,7 +244,7 @@ class BeanstalkClient
         });
     }
 
-    public function touch(int $id): Promise
+    public function touch(int $id)
     {
         $payload = "touch $id\r\n";
 
@@ -271,7 +264,7 @@ class BeanstalkClient
         });
     }
 
-    public function watch(string $tube): Promise
+    public function watch(string $tube)
     {
         $payload = "watch $tube\r\n";
 
@@ -284,7 +277,7 @@ class BeanstalkClient
         });
     }
 
-    public function ignore(string $tube): Promise
+    public function ignore(string $tube)
     {
         $payload = "ignore $tube\r\n";
 
@@ -309,7 +302,7 @@ class BeanstalkClient
         $this->send("quit\r\n");
     }
 
-    public function getJobStats(int $id): Promise
+    public function getJobStats(int $id)
     {
         $payload = "stats-job $id\r\n";
 
@@ -329,7 +322,7 @@ class BeanstalkClient
         });
     }
 
-    public function getTubeStats(string $tube): Promise
+    public function getTubeStats(string $tube)
     {
         $payload = "stats-tube $tube\r\n";
 
@@ -349,7 +342,7 @@ class BeanstalkClient
         });
     }
 
-    public function getSystemStats(): Promise
+    public function getSystemStats()
     {
         $payload = "stats\r\n";
 
@@ -362,7 +355,7 @@ class BeanstalkClient
         });
     }
 
-    public function listTubes(): Promise
+    public function listTubes()
     {
         $payload = "list-tubes\r\n";
 
@@ -379,7 +372,7 @@ class BeanstalkClient
         });
     }
 
-    public function listWatchedTubes(): Promise
+    public function listWatchedTubes()
     {
         $payload = "list-tubes-watched\r\n";
 
@@ -396,7 +389,7 @@ class BeanstalkClient
         });
     }
 
-    public function getUsedTube(): Promise
+    public function getUsedTube()
     {
         $payload = "list-tube-used\r\n";
 
@@ -413,7 +406,7 @@ class BeanstalkClient
         });
     }
 
-    public function peek(int $id): Promise
+    public function peek(int $id)
     {
         $payload = "peek $id\r\n";
 
@@ -433,22 +426,22 @@ class BeanstalkClient
         });
     }
 
-    public function peekReady(): Promise
+    public function peekReady()
     {
         return $this->peekInState('ready');
     }
 
-    public function peekDelayed(): Promise
+    public function peekDelayed()
     {
         return $this->peekInState('delayed');
     }
 
-    public function peekBuried(): Promise
+    public function peekBuried()
     {
         return $this->peekInState('buried');
     }
 
-    private function peekInState(string $state): Promise
+    private function peekInState(string $state)
     {
         $payload = "peek-$state\r\n";
 

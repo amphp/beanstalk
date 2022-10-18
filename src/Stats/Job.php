@@ -2,12 +2,8 @@
 
 namespace Amp\Beanstalk\Stats;
 
-use Amp\Struct;
-
 class Job
 {
-    use Struct;
-
     const STATE_READY = "ready";
     const STATE_DELAYED = "delayed";
     const STATE_RESERVED = "reserved";

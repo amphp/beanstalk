@@ -2,34 +2,24 @@
 
 namespace Amp\Beanstalk;
 
-use function Amp\asyncCall;
-use function Amp\call;
-use Amp\Deferred;
+use Amp\DeferredFuture;
+use Amp\Future;
+use function Amp\async;
 use function Amp\Socket\connect;
 use Amp\Socket\ConnectContext;
 use Amp\Socket\Socket;
-use Amp\Success;
 use Amp\Uri\Uri;
 
 class Connection
 {
-    /** @var Deferred */
-    private $connectPromisor;
-
-    /** @var Parser */
-    private $parser;
-
-    /** @var int */
-    private $timeout = 5000;
-
-    /** @var Socket */
-    private $socket;
-
-    /** @var string */
-    private $uri;
+    private ?DeferredFuture $connectFuture = null;
+    private Parser $parser;
+    private int $timeout = 5000;
+    private ?Socket $socket = null;
+    private string $uri;
 
     /** @var callable[][] */
-    private $handlers;
+    private array $handlers;
 
     public function __construct(string $uri)
     {
@@ -73,44 +63,27 @@ class Connection
         }
     }
 
-    public function send(string $payload)
+    public function send(string $payload): void
     {
-        return call(function () use ($payload) {
-            yield $this->connect();
-            yield $this->socket->write($payload);
-        });
+        $this->connect()->await();
+        $this->socket->write($payload);
     }
 
-    private function connect(): Success
+    private function connect(): Future
     {
         // If we're in the process of connecting already return that same promise
-        if ($this->connectPromisor) {
-            return $this->connectPromisor->promise();
+        if ($this->connectFuture) {
+            return $this->connectFuture->getFuture();
         }
 
         // If a read watcher exists we know we're already connected
         if ($this->socket) {
-            return new Success;
+            return Future::complete();
         }
 
-        $this->connectPromisor = new Deferred;
-        $socketPromise = connect($this->uri, (new ConnectContext)->withConnectTimeout($this->timeout));
-
-        $socketPromise->onResolve(function ($error, $socket) {
-            $connectPromisor = $this->connectPromisor;
-            $this->connectPromisor = null;
-
-            if ($error) {
-                $connectPromisor->fail(new ConnectException(
-                    "Connection attempt failed",
-                    $code = 0,
-                    $error
-                ));
-
-                return;
-            }
-
-            $this->socket = $socket;
+        $this->connectFuture = $connectFuture = new DeferredFuture();
+        $socketFuture = async(function () use ($connectFuture) {
+            $this->socket = connect($this->uri, (new ConnectContext)->withConnectTimeout($this->timeout));
 
             foreach ($this->handlers["connect"] as $handler) {
                 $pipelinedCommand = $handler();
@@ -120,18 +93,26 @@ class Connection
                 }
             }
 
-            asyncCall(function () {
-                while (null !== $chunk = yield $this->socket->read()) {
+            async(function () {
+                while (null !== $chunk = $this->socket->read()) {
                     $this->parser->send($chunk);
                 }
 
                 $this->close();
             });
 
-            $connectPromisor->resolve();
+            $connectFuture->complete();
         });
 
-        return $this->connectPromisor->promise();
+        $socketFuture->finally(function () {
+            $this->connectFuture = null;
+        });
+
+        $socketFuture->catch(function (\Throwable $error) use ($connectFuture) {
+            $connectFuture->error(new ConnectException('Connection attempt failed', 0, $error));
+        });
+
+        return $this->connectFuture->getFuture();
     }
 
     private function onError(\Throwable $exception): void

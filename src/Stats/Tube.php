@@ -2,12 +2,8 @@
 
 namespace Amp\Beanstalk\Stats;
 
-use Amp\Struct;
-
 class Tube
 {
-    use Struct;
-
     public function __construct(array $struct)
     {
         $this->name = $struct["name"];
